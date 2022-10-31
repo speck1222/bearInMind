@@ -2,8 +2,8 @@
     "schemaVersion": 2,
     "dockerfileLines": [
         "FROM node:18.7.0-alpine",
-        "RUN mkdir -p /usr/src/app/server",
-        "COPY ./server /usr/src/app/server",
+        "RUN mkdir -p /usr/src/app",
+        "COPY ./server /usr/src/app",
         "RUN npm install && npm cache clean --force",
         "CMD [ \"npm\", \"start\" ]"
     ]
