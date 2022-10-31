@@ -1,7 +1,7 @@
 {
     "schemaVersion": 2,
     "dockerfileLines": [
-        "FROM node:18.7.0-alpine as builder"
+        "FROM node:18.7.0-alpine as builder",
         # Set the working directory to /app inside the container
         "RUN mkdir -p /usr/src/app",
         "COPY ./client /usr/src/app",
