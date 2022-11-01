@@ -6,7 +6,7 @@ function App() {
   const [data, setData] = React.useState(null);
 
   React.useEffect(() => {
-    fetch("http://srv-captain--bear-in-mind-backend/api")
+    fetch("https://srv-captain--bear-in-mind-backend/api")
       .then((res) => res.json())
       .then((data) => setData(data.message));
   }, []);
