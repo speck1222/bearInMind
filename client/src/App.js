@@ -4,7 +4,7 @@ import "./App.css";
 
 function App() {
   const [data, setData] = React.useState(null);
-  const api_url = process.env.REACT_APP_API_URL|| 'http://localhost:3001'
+  const api_url = process.env.NODE_ENV === 'production' ? process.env.REACT_APP_API_URL : 'http://localhost:3001'
 
   React.useEffect(() => {
     fetch(api_url)
