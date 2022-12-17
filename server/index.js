@@ -7,6 +7,7 @@ const redis = require('redis')
 const PORT = process.env.PORT || 3001;
 
 const app = express();
+console.log(process.env.NODE_ENV)
 var corsOptions = {
   origin: process.env.frontend_url || 'http://localhost:3000',
   optionsSuccessStatus: 200 // For legacy browser support
@@ -15,6 +16,7 @@ app.use(cors(corsOptions))
 const client = redis.createClient(6379, 'srv-captain--game-instance' , {password: 'Dalltx13'})
 
 app.get("/", (req, res) => {
+  console.log(process.env.frontend_url)
   res.json({ message: "Hello from server!" });
 });
 
