@@ -9,7 +9,7 @@ const PORT = process.env.PORT || 3001;
 const app = express();
 console.log(process.env.NODE_ENV)
 var corsOptions = {
-  origin: process.env.frontend_url || 'http://localhost:3000',
+  origin: process.env.NODE_ENV === 'production' ? 'https://bear-in-mind-frontend.game.peckappbearmind.com' || 'http://localhost:3000',
   optionsSuccessStatus: 200 // For legacy browser support
 }
 app.use(cors(corsOptions))
