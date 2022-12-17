@@ -4,12 +4,13 @@ import "./App.css";
 
 function App() {
   const [data, setData] = React.useState(null);
+  const api_url = process.env.api_url || 'http://localhost:3001'
 
   React.useEffect(() => {
-    fetch("https://bear-in-mind-backend.game.peckappbearmind.com")
+    fetch(api_url)
       .then((res) => res.json())
       .then((data) => setData(data.message));
-  }, []);
+  }, [api_url]);
 
   return (
     <div className="App">
