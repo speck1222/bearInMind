@@ -6,7 +6,7 @@ function App() {
   const [data, setData] = React.useState(null);
 
   React.useEffect(() => {
-    fetch("https://srv-captain--bear-in-mind-backend/")
+    fetch("https://bear-in-mind-backend.game.peckappbearmind.com/")
       .then((res) => res.json())
       .then((data) => setData(data.message));
   }, []);
