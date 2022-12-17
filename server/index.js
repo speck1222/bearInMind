@@ -6,7 +6,11 @@ const cors = require('cors');
 const PORT = process.env.PORT || 3001;
 
 const app = express();
-app.use(cors())
+var corsOptions = {
+  origin: 'https://bear-in-mind-frontend.game.peckappbearmind.com',
+  optionsSuccessStatus: 200 // For legacy browser support
+}
+app.use(cors(corsOptions))
 
 app.get("/", (req, res) => {
   res.json({ message: "Hello from server!" });
