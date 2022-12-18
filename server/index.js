@@ -1,8 +1,9 @@
 // server/index.js
-const path = require('path');
-const express = require("express");
-const cors = require('cors');
-const redis = require('redis')
+import path from 'path';
+import express from "express";
+import cors from 'cors';
+import redis from 'redis';
+import getRedisClient from './RedisClient';
 
 const PORT = process.env.PORT || 3001;
 
@@ -14,11 +15,11 @@ var corsOptions = {
   optionsSuccessStatus: 200 // For legacy browser support
 }
 app.use(cors(corsOptions))
-const client = redis.createClient(6379, 'srv-captain--game-instance' , {password: 'Dalltx13'})
+const client = getRedisClient()
 
-app.get("/", (req, res) => {
+app.get("/", async (req, res) => {
   console.log(process.env.frontend_url)
-  res.json({ message: "Hello from server!" });
+  res.json({ message: 'Hello' });
 });
 
 app.get("/api", (req, res) => {
