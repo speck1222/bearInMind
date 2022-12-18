@@ -1,13 +1,10 @@
-const WebSocket = require('ws')
-const redis = require('redis')
 const getRedisClient = require('./RedisClient')
 const express = require('express')
 const { createServer } = require('http')
 const { Server } = require('socket.io')
 
 const PORT = process.env.PORT || 3001
-// const origin = process.env.NODE_ENV === 'production' ? 'https://bear-in-mind-frontend.game.peckappbearmind.com' : 'http://localhost:3000'
-const origin = 'https://bear-in-mind-frontend.game.peckappbearmind.com'
+const origin = process.env.NODE_ENV === 'production' ? 'https://bear-in-mind-frontend.game.peckappbearmind.com' : 'http://localhost:3000'
 console.log(process.env.NODE_ENV)
 
 const runApplication = async () => {
