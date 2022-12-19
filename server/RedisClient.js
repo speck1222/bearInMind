@@ -11,7 +11,7 @@ const productionClient = () => redis.createClient({
 const devClient = () => redis.createClient()
 
 function getRedisClient () {
-  const client = process.env.NODE_ENV === 'production' ? productionClient : devClient
+  const client = process.env.NODE_ENV === 'production' ? productionClient() : devClient()
   client.on('error', (err) => console.log('Redis Client Error', err))
   return client
 }
