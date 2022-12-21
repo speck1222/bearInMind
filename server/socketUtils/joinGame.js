@@ -26,4 +26,4 @@ async function fetchPlayers (io, socket, code) {
 }
 
 module.exports = joinGame
-module.exports = fetchPlayers
+// module.exports = fetchPlayers
