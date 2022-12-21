@@ -4,7 +4,7 @@ const { createServer } = require('http')
 const { Server } = require('socket.io')
 const { v4 } = require('uuid')
 const initGame = require('./socketUtils/hostGame')
-const { joinGame, fetchPlayers } = require('./socketUtils/JoinGame')
+const fetchPlayers = require('./socketUtils/JoinGame')
 
 const PORT = process.env.PORT || 3001
 const origin = process.env.NODE_ENV === 'production' ? 'https://bear-in-mind-frontend.game.peckappbearmind.com' : 'http://localhost:3000'
@@ -56,7 +56,7 @@ const runApplication = async () => {
   io.on('connection', (socket) => {
     socket.join(socket.userID)
 
-    socket.on('join', async (code, userName) => await joinGame(io, socket, code, userName))
+    // socket.on('join', async (code, userName) => await (io, socket, code, userName))
     socket.on('init game', async () => await initGame(io, socket))
     socket.on('fetch players', async (code) => await fetchPlayers(io, socket, code))
   })
