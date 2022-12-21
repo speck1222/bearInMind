@@ -1,9 +1,9 @@
 // server/index.js
-import path from 'path'
-import express from 'express'
-import cors from 'cors'
-import redis from 'redis'
-import getRedisClient from './RedisClient'
+const path = require('path')
+const express = require('express')
+const cors = require('cors')
+const redis = require('redis')
+const getRedisClient = require('./RedisClient')
 
 const PORT = process.env.PORT || 3001
 

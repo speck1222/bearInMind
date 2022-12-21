@@ -10,10 +10,13 @@ const productionClient = () => redis.createClient({
 
 const devClient = () => redis.createClient()
 
-function getRedisClient () {
-  const client = process.env.NODE_ENV === 'production' ? productionClient() : devClient()
-  client.on('error', (err) => console.log('Redis Client Error', err))
-  return client
-}
+const redisClient = process.env.NODE_ENV === 'production' ? productionClient() : devClient()
 
-module.exports = getRedisClient
+module.exports = redisClient;
+
+// conect redis client async imediatly after exporting
+(async () => {
+  redisClient.on('error', (err) => console.log(err))
+  console.log('connecting redis')
+  await redisClient.connect()
+})()

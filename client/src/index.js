@@ -7,13 +7,19 @@ import { SocketProvider } from './websocket/SocketProvider'
 
 const root = ReactDOM.createRoot(document.getElementById('root'))
 root.render(
-
-  <React.StrictMode>
     <SocketProvider>
       <App />
     </SocketProvider>
-  </React.StrictMode>
 )
+
+// root.render(
+
+//   <React.StrictMode>
+//     <SocketProvider>
+//       <App />
+//     </SocketProvider>
+//   </React.StrictMode>
+// )
 
 // If you want to start measuring performance in your app, pass a function
 // to log results (for example: reportWebVitals(console.log))

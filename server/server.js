@@ -1,8 +1,10 @@
-const getRedisClient = require('./RedisClient')
+const redisClient = require('./RedisClient')
 const express = require('express')
 const { createServer } = require('http')
 const { Server } = require('socket.io')
 const { v4 } = require('uuid')
+const initGame = require('./socketUtils/hostGame')
+const { joinGame, fetchPlayers } = require('./socketUtils/JoinGame')
 
 const PORT = process.env.PORT || 3001
 const origin = process.env.NODE_ENV === 'production' ? 'https://bear-in-mind-frontend.game.peckappbearmind.com' : 'http://localhost:3000'
@@ -16,9 +18,11 @@ const runApplication = async () => {
       origin
     }
   })
+
+  app.get('/api', (req, res) => {
+    res.json({ message: 'Hello from server!' })
+  })
   // const server = new WebSocket.Server({ port : PORT })
-  const redisClient = getRedisClient()
-  await redisClient.connect()
 
   io.use(async (socket, next) => {
     // get session from client
@@ -27,7 +31,8 @@ const runApplication = async () => {
     console.log('from the client', sessionID)
     if (sessionID) {
     // find existing session
-      const userId = await redisClient.hGet(sessionID, 'userId')
+      const userId = await redisClient.hGet(`users:${sessionID}`, 'userId')
+      // const userId = await redisClient.json.get(`users:${sessionID}`, '.userId')
       // if found set
       if (userId) {
         console.log('from redis', sessionID)
@@ -38,7 +43,8 @@ const runApplication = async () => {
     socket.sessionID = v4()
     socket.userId = v4()
     console.log('create new session', socket.sessionID)
-    await redisClient.hSet(socket.sessionID, 'userId', socket.userId)
+    await redisClient.hSet(`users:${socket.sessionID}`, 'userId', socket.userId)
+    // await redisClient.json.set(`users:${socket.sessionID}`, '.', { userId: socket.userId })
     socket.emit('session', {
       sessionID: socket.sessionID
     })
@@ -47,29 +53,14 @@ const runApplication = async () => {
   })
 
   io.on('connection', (socket) => {
-    console.log('connection run')
-    io.emit('hello', 'world')
+    socket.join(socket.userID)
+
+    socket.on('join', async (code, userName) => await joinGame(io, socket, code, userName))
+    socket.on('init game', async () => await initGame(io, socket))
+    socket.on('fetch players', async (code) => await fetchPlayers(io, socket, code))
   })
 
   httpServer.listen(PORT)
-
-  // server.on('connection', async (ws) => {
-  //     console.log('hey')
-  //     ws.send('poop')
-  //     ws.id = wss.getUniqueID();
-
-  //     ws.clients.forEach(function each(client) {
-  //         console.log('Client.ID: ' + client.id);
-  //     });
-  //   // broadcast on web socket when receving a Redis PUB/SUB Event
-  // //   redisClient.on('message', (channel, message) => {
-  // //     console.log(message)
-  // //     ws.send(message)
-  // //   })
-
-  // })
-  // server.on('poop')
-  // console.log("WebSocket server started at ws://locahost:"+ PORT)
 }
 
 runApplication()
