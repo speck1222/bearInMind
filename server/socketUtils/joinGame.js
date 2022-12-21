@@ -21,9 +21,4 @@ async function joinGame (io, socket, code, userName) {
   socket.to(code).emit('player joined', { userId, userName })
 }
 
-async function fetchPlayers (io, socket, code) {
-  console.log('fetching players')
-}
-
 module.exports = joinGame
-// module.exports = fetchPlayers

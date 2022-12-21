@@ -11,5 +11,10 @@ async function setUserName (socket, userName) {
   await redisClient.hSet(`users:${sessionID}`, 'userName', userName)
 }
 
+async function fetchPlayers (io, socket, code) {
+  console.log('fetching players')
+}
+
 module.exports.getUserId = getUserId
 module.exports.setUserName = setUserName
+module.exports.fetchPlayers = fetchPlayers
