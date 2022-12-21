@@ -1,4 +1,3 @@
-const { urlencoded } = require('express')
 const redisClient = require('../RedisClient')
 
 async function getUserId (socket) {

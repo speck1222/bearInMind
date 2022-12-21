@@ -8,6 +8,7 @@ const { joinGame, fetchPlayers } = require('./socketUtils/JoinGame')
 
 const PORT = process.env.PORT || 3001
 const origin = process.env.NODE_ENV === 'production' ? 'https://bear-in-mind-frontend.game.peckappbearmind.com' : 'http://localhost:3000'
+console.log(origin)
 
 const runApplication = async () => {
   // Connect to redis at 127.0.0.1 port 6379 no password.
