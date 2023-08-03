@@ -1,7 +1,7 @@
 import { React, createContext, useEffect, useState } from 'react'
 import { io } from 'socket.io-client'
 
-const socketOrigin = process.env.NODE_ENV === 'production' ? 'https://bear-in-mind-backend.game.peckappbearmind.com' : 'http://localhost:3001'
+const socketOrigin = 'http://localhost:3001'
 const socket = io(socketOrigin)
 
 export const SocketContext = createContext(socket)

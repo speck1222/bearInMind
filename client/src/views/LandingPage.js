@@ -1,4 +1,4 @@
-import { Paper, Button, TextField, Alert } from '@mui/material'
+import { Paper, Button, TextField, Alert, Grid, Typography, Container } from '@mui/material'
 import React, { useState } from 'react'
 import { useSocket } from '../websocket/useSocket'
 import { useNavigate } from 'react-router-dom'
@@ -24,10 +24,12 @@ export default function LandingPage () {
   }
 
   function hostGame () {
-    socket.emit('init game')
+    console.log('hosting game')
+    socket.emit('init game', name)
   }
 
   const joinDisabled = !(code && name)
+  const createDisabled = !name
 
   React.useEffect(() => {
     socket.on('joined game', (gameId) => {
@@ -39,13 +41,52 @@ export default function LandingPage () {
   }, [])
 
   return (
-    <Paper>
-        <h1>Join or host a Game</h1>
-        <h3>host game</h3>
-        <Button onClick={hostGame} variant="contained">Host</Button>
-        <h3>Join game</h3>
-        <TextField onChange={onCodeChange} value={code} id="outlined-basic" label="Enter Code" variant="outlined" />
-        <TextField onChange={onNameChange} value={name} id="outlined-basic" label="Enter Name" variant="outlined" />
-        <Button onClick={joinGame} disabled={joinDisabled} variant="contained">Join</Button>    </Paper>
+    <Container>
+      <Typography variant="h4" align="center" gutterBottom>
+        Create Or Join A Game
+      </Typography>
+      <Grid container spacing={3} justify="center">
+        <Grid item xs={12} sm={6}>
+          <TextField
+            fullWidth
+            variant="outlined"
+            label="Your Name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+        </Grid>
+        <Grid item xs={12} sm={6}>
+          <Button
+            fullWidth
+            variant="contained"
+            color="primary"
+            onClick={hostGame}
+            disabled={createDisabled}
+          >
+            Create Game
+          </Button>
+        </Grid>
+        <Grid item xs={12} sm={6}>
+          <TextField
+            fullWidth
+            variant="outlined"
+            label="Room Code"
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+          />
+        </Grid>
+        <Grid item xs={12} sm={6}>
+          <Button
+            fullWidth
+            variant="contained"
+            color="secondary"
+            onClick={joinGame}
+            disabled={joinDisabled}
+          >
+            Join Game
+          </Button>
+        </Grid>
+      </Grid>
+    </Container>
   )
 }
