@@ -1,18 +1,17 @@
 const redisClient = require('../RedisClient')
-const { setUserName, getUserId } = require('./userUtils')
+const { setUserName, getUserId, refreshUserSession } = require('./userUtils')
 
 const gameExists = async (code) => {
   const gameExists = await redisClient.exists(`games:${code}:started`)
-  console.log('game exists', gameExists)
   return gameExists
 }
 
 async function getPlayers (code) {
   const playerIds = await redisClient.lrange(`games:${code}:players`, 0, -1)
-  console.log('playerIds', playerIds)
+  const hostId = await redisClient.get(`games:${code}:host`)
   const players = await Promise.all(playerIds.map(async (Id) => {
     const userName = await redisClient.get(`users:${Id}:userName`)
-    return { userId: Id, userName }
+    return { userId: Id, userName, isHost: Id === hostId }
   }))
   return players
 }
@@ -26,16 +25,17 @@ async function isPlayerInGame (code, playerId) {
 }
 
 async function joinGame (io, socket, code, userName) {
-  console.log('Joining game')
   const isGame = await gameExists(code)
   if (!isGame) {
     socket.emit('alert', 'error', 'Game does not exist!')
     return
   }
-  await setUserName(socket, userName)
-  // join 'game' room
+  // join 'game' room\
   const userId = await getUserId(socket)
-  console.log('this is the code --> ', code)
+  if (!userId) {
+    socket.emit('alert', 'error', 'User does not exist! Try refreshing the browser.')
+  }
+  await setUserName(socket, userName)
   await redisClient.rpush(`games:${code}:players`, userId)
   await redisClient.set(`users:${userId}:currentGame`, code)
   socket.join(code)
@@ -52,6 +52,36 @@ async function fetchPlayers (io, socket, code) {
   socket.emit('fetched players', players)
 }
 
+async function fetchMe (io, socket, code) {
+  const userId = await getUserId(socket)
+  // If game doesnt exist tell client to leave game
+  if (!await redisClient.get(`games:${code}:host`)) {
+    socket.emit('leave game')
+  }
+  socket.emit('fetched me', { userId })
+}
+
+async function leaveGame (io, socket, code) {
+  const userId = await getUserId(socket)
+  await redisClient.lrem(`games:${code}:players`, 0, userId)
+  await redisClient.del(`users:${userId}:currentGame`)
+  socket.leave(code)
+  socket.emit('leave game')
+  let players = await getPlayers(code)
+  if (players.length === 0) {
+    await redisClient.del(`games:${code}:started`)
+    await redisClient.del(`games:${code}:host`)
+    return
+  }
+  if (players.length === 1) {
+    await redisClient.set(`games:${code}:host`, players[0].userId)
+    players = await getPlayers(code)
+  }
+  socket.to(code).emit('fetched players', players)
+}
+
 module.exports.joinGame = joinGame
 module.exports.fetchPlayers = fetchPlayers
 module.exports.isPlayerInGame = isPlayerInGame
+module.exports.fetchMe = fetchMe
+module.exports.leaveGame = leaveGame

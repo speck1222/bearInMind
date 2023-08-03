@@ -12,7 +12,8 @@ export default function LandingPage () {
   const [error, setError] = useState(null)
 
   function onCodeChange (event) {
-    setCode(event.target.value)
+    const uppercaseValue = event.target.value.toUpperCase()
+    setCode(uppercaseValue)
   }
 
   function onNameChange (event) {
@@ -72,7 +73,7 @@ export default function LandingPage () {
             variant="outlined"
             label="Room Code"
             value={code}
-            onChange={(e) => setCode(e.target.value)}
+            onChange={(e) => onCodeChange(e)}
           />
         </Grid>
         <Grid item xs={12} sm={6}>

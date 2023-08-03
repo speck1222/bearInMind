@@ -26,6 +26,9 @@ function App () {
       const data = { type, message }
       setSocketAlert(data)
     })
+    socket.on('leave game', () => {
+      window.location.href = '/'
+    })
     return () => {
       socket.off('alert')
     }

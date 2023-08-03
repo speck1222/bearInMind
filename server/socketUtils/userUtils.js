@@ -11,38 +11,50 @@ async function getUserId (socket) {
 
 async function setUserName (socket, userName) {
   const userId = await getUserId(socket)
-  console.log(userId)
   await redisClient.set(`users:${userId}:userName`, userName)
 }
 
-async function refreshUserSession (socket) {
-  // get session from client
-  const sessionID = socket.handshake.auth.sessionID
-  if (sessionID) {
-    // find existing session
-    const userId = await redisClient.get(`session:${sessionID}:userId`)
-    if (userId) {
-      const currentGame = await redisClient.get(`users:${userId}:currentGame`)
-      if (currentGame) {
-        const gameStarted = await redisClient.get(`games:${currentGame}:started`)
-        if (gameStarted === 1) {
-          console.log('join game')
-        }
-        console.log('game already exists')
-        socket.emit('joined game', currentGame)
+const createNewSession = async (sessionId, userId) => {
+  await redisClient.set(`session:${sessionId}:userId`, userId)
+  await redisClient.set(`users:${userId}:sessionId`, sessionId)
+}
+
+const handleExistingSession = async (sessionId, socket) => {
+  const userId = await redisClient.get(`session:${sessionId}:userId`)
+  if (userId) {
+    console.log('existing userId', userId)
+    const currentGame = await redisClient.get(`users:${userId}:currentGame`)
+    if (currentGame) {
+      const gameStarted = await redisClient.get(`games:${currentGame}:started`)
+      if (gameStarted === '1') {
+        console.log('join game')
       }
-      return
+      socket.emit('joined game', currentGame)
     }
+  } else {
+    console.log('create new userId')
+    const newUserId = v4()
+    await createNewSession(sessionId, newUserId)
   }
-  // create new session
-  socket.sessionID = v4()
-  socket.userId = v4()
-  await redisClient.set(`session:${socket.sessionID}:userId`, socket.userId)
-  await redisClient.set(`users:${socket.userId}:sessionId`, socket.sessionID)
-  // await redisClient.json.set(`users:${socket.sessionID}`, '.', { userId: socket.userId })
-  socket.emit('session', {
-    sessionID: socket.sessionID
-  })
+}
+
+const refreshUserSession = async (socket) => {
+  try {
+    const sessionId = socket.handshake.auth.sessionID
+    if (sessionId) {
+      await handleExistingSession(sessionId, socket)
+    } else {
+      const newSessionId = v4()
+      const userId = v4()
+      await createNewSession(newSessionId, userId)
+      socket.emit('session', {
+        sessionID: newSessionId
+      })
+    }
+  } catch (error) {
+    console.error('An error occurred while refreshing user session:', error)
+    // You might want to handle this error in some way, perhaps by emitting a message to the client.
+  }
 }
 
 module.exports.getUserId = getUserId
