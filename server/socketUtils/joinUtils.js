@@ -71,6 +71,8 @@ async function leaveGame (io, socket, code) {
   if (players.length === 0) {
     await redisClient.del(`games:${code}:started`)
     await redisClient.del(`games:${code}:host`)
+    await redisClient.del(`games:${code}:players`)
+    await redisClient.del(`games:${code}:messages`)
     return
   }
   if (players.length === 1) {

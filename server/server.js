@@ -5,6 +5,7 @@ const { Server } = require('socket.io')
 const initGame = require('./socketUtils/hostGame')
 const { refreshUserSession } = require('./socketUtils/userUtils')
 const { fetchPlayers, joinGame, fetchMe, leaveGame } = require('./socketUtils/joinUtils')
+const { fetchMessages, sendMessage } = require('./socketUtils/chatUtils')
 
 const PORT = process.env.PORT || 3001
 const origin = process.env.NODE_ENV === 'production' ? 'https://bear-in-mind-frontend.game.peckappbearmind.com' : 'http://localhost:3000'
@@ -38,6 +39,12 @@ const runApplication = async () => {
 
     socket.on('fetch players', async (code) => await fetchPlayers(io, socket, code))
     socket.on('fetch me', async (code) => await fetchMe(io, socket, code))
+
+    socket.on('fetch messages', async (code) => await fetchMessages(io, socket, code))
+    socket.on('send message', async (code, message) => {
+      console.log('Sending message', message)
+      await sendMessage(io, socket, code, message)
+    })
   })
 
   httpServer.listen(PORT)

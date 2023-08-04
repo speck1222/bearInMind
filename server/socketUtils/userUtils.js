@@ -3,9 +3,7 @@ const { v4 } = require('uuid')
 
 async function getUserId (socket) {
   const sessionID = socket.handshake.auth.sessionID
-  console.log('sessionID', sessionID)
   const userId = await redisClient.get(`session:${sessionID}:userId`)
-  console.log('userId', userId)
   return userId
 }
 
