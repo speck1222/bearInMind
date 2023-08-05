@@ -39,7 +39,7 @@ async function joinGame (io, socket, code, userName) {
   await redisClient.rpush(`games:${code}:players`, userId)
   await redisClient.set(`users:${userId}:currentGame`, code)
   socket.join(code)
-  // emit back to client
+  // re fetch user info
   fetchMe(socket)
   // emit to all players in game room
   const players = await getPlayers(code)
