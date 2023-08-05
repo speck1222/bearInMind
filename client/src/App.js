@@ -3,7 +3,7 @@ import logo from './logo.svg'
 import './App.css'
 import { useSocket } from './websocket/useSocket'
 import LandingPage from './views/LandingPage'
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom'
 import ButtonAppBar from './components/AppBar'
 import GamePage from './views/GamePage'
 import HostPage from './views/HostPage'
@@ -21,23 +21,48 @@ import Button from '@mui/material/Button'
 function App () {
   const [socketAlert, setSocketAlert] = useState(null)
   const socket = useSocket()
+  const [gameStarted, setGameStarted] = useState(false)
+  const [me, setMe] = useState(null)
 
   function handleCloseAlert () {
     setSocketAlert(null)
   }
 
   React.useEffect(() => {
+    socket.emit('fetch me')
+
+    socket.on('fetched me', (me) => {
+      setMe(me)
+      console.log(me)
+      if (me.gameStarted) {
+        setGameStarted(Number(me.gameStarted))
+      }
+    })
+
+    socket.on('start game', () => {
+      setGameStarted(1)
+    })
+
     socket.on('alert', (type, message) => {
       const data = { type, message }
       setSocketAlert(data)
-    })
-    socket.on('leave game', () => {
-      window.location.href = '/'
     })
     return () => {
       socket.off('alert')
     }
   }, [socketAlert])
+
+  if (!me) return (<div>Loading...</div>)
+
+  const renderPage = () => {
+    if (me.currentGame && !gameStarted) {
+      return <WaitingRoom gameId={me.currentGame} me={me}/>
+    } else if (me.currentGame && gameStarted) {
+      return <GamePage gameId={me.currentGame} me={me}/>
+    } else {
+      return <LandingPage/>
+    }
+  }
 
   return (
       <div className="App">
@@ -45,16 +70,7 @@ function App () {
           <AlertModal open={true} type={socketAlert.type} message={socketAlert.message} handleClose={handleCloseAlert}/>
         )}
         <ButtonAppBar/>
-
-        <BrowserRouter>
-          <Routes>
-            <Route path='/' element={<LandingPage/>}/>
-            <Route path='/game' element={<GamePage/>}/>
-            <Route path='/host/:gameId' element={<HostPage/>}/>
-            <Route path='/join' element={<JoinPage/>}/>
-            <Route path='/waiting-room/:gameId' element={<WaitingRoom/>}/>
-          </Routes>
-        </BrowserRouter>
+        {renderPage()}
       </div>
   )
 }

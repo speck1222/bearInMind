@@ -2,9 +2,9 @@ const redisClient = require('./RedisClient')
 const express = require('express')
 const { createServer } = require('http')
 const { Server } = require('socket.io')
-const initGame = require('./socketUtils/hostGame')
-const { refreshUserSession } = require('./socketUtils/userUtils')
-const { fetchPlayers, joinGame, fetchMe, leaveGame } = require('./socketUtils/joinUtils')
+const { initGame, startGame } = require('./socketUtils/hostGame')
+const { refreshUserSession, fetchMe } = require('./socketUtils/userUtils')
+const { fetchPlayers, joinGame, leaveGame } = require('./socketUtils/joinUtils')
 const { fetchMessages, sendMessage } = require('./socketUtils/chatUtils')
 
 const PORT = process.env.PORT || 3001
@@ -38,13 +38,11 @@ const runApplication = async () => {
     socket.on('init game', async (userName) => await initGame(io, socket, userName))
 
     socket.on('fetch players', async (code) => await fetchPlayers(io, socket, code))
-    socket.on('fetch me', async (code) => await fetchMe(io, socket, code))
+    socket.on('fetch me', async () => await fetchMe(socket))
 
     socket.on('fetch messages', async (code) => await fetchMessages(io, socket, code))
-    socket.on('send message', async (code, message) => {
-      console.log('Sending message', message)
-      await sendMessage(io, socket, code, message)
-    })
+    socket.on('send message', async (code, message) => await sendMessage(io, socket, code, message))
+    socket.on('start game', async (code) => await startGame(io, socket, code))
   })
 
   httpServer.listen(PORT)

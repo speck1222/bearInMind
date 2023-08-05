@@ -1,41 +1,32 @@
 import { Paper, Container, Typography, List, ListItem, ListItemText, ListItemAvatar, Avatar, Divider, Button, Grid } from '@mui/material'
 import React, { useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { useSocket } from '../websocket/useSocket'
 import ChatFeed from '../components/ChatFeed'
 import forestScene from '../assets/forest_edited.png'
 import MyButton from '../components/Button'
 
-export default function WaitingRoom () {
-  const { gameId } = useParams()
+export default function WaitingRoom ({ gameId, me }) {
   const socket = useSocket()
   const [players, setPlayers] = useState([])
   const [isHost, setIsHost] = useState(false)
-  const [me, setMe] = useState(null)
 
   function leaveGame () {
     socket.emit('leave game', gameId)
   }
 
+  function startGame () {
+    socket.emit('start game', gameId)
+  }
+
   React.useEffect(() => {
-    socket.emit('fetch me', gameId)
     socket.emit('fetch players', gameId)
 
-    socket.on('fetched me', (player) => {
-      console.log('This is me', player)
-      setMe(player)
-      setIsHost(player.isHost)
-    })
     socket.on('fetched players', (players) => {
       setPlayers(players)
-      console.log(players)
-    })
-    socket.on('player joined', (player) => {
-      console.log(player)
     })
     return () => {
       socket.off('fetched players')
-      socket.off('player joined')
     }
   }, [])
 
@@ -51,13 +42,6 @@ export default function WaitingRoom () {
     left: 0,
     zIndex: -1
   }
-
-  const messages = [
-    { sender: 'John', text: 'Hey' },
-    { sender: 'Jane', text: 'Hi' },
-    { sender: 'John', text: 'How are you?' },
-    { sender: 'Jane', text: 'I\'m good, how are you?' }
-  ]
 
   if (!players || !me) return (<div>Loading...</div>)
 
@@ -99,10 +83,10 @@ export default function WaitingRoom () {
             <MyButton onClick={leaveGame} label='Leave Game' gradient='warning' />
           </Grid>
           <Grid item xs={6}>
-            <MyButton onClick={leaveGame} label='Start Game' gradient='primary' />
+            <MyButton onClick={startGame} label='Start Game' gradient='primary' />
           </Grid>
         </Grid>
-        <ChatFeed messages={messages} gameId={gameId} currentUserId={me.userId} />
+        <ChatFeed gameId={gameId} currentUserId={me.userId} />
       </div>
     </div>
   )
