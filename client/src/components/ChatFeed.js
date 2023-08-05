@@ -52,8 +52,8 @@ const ChatFeed = ({ gameId }) => {
   }, [])
 
   return (
-    <div style={{ paddingTop: '60px', overflow: 'hidden' }}>
-      <Paper style={{ backgroundColor: '#FAF9F6' }} elevation={3}>
+    <div style={{ opacity: '0.9', paddingTop: '60px', overflow: 'hidden' }}>
+      <Paper style={{ border: '3px solid black', backgroundColor: '#FAF9F6' }} elevation={3}>
         <Paper ref={chatBoxRef} elevation={0} sx={{ backgroundColor: '#FAF9F6' }} style={{ minWidth: '350px', maxWidth: '600px', padding: '16px', height: '90px', overflow: 'auto' }}>
           <List style={{ }}>
             {messages.map((message, index) => (

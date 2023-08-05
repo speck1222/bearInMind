@@ -1,9 +1,10 @@
-import { Paper, Container, Typography, List, ListItem, ListItemText, ListItemAvatar, Avatar, Divider, Button } from '@mui/material'
+import { Paper, Container, Typography, List, ListItem, ListItemText, ListItemAvatar, Avatar, Divider, Button, Grid } from '@mui/material'
 import React, { useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useSocket } from '../websocket/useSocket'
 import ChatFeed from '../components/ChatFeed'
-import forestScene from '../assets/simple_forest.png'
+import forestScene from '../assets/forest_edited.png'
+import MyButton from '../components/Button'
 
 export default function WaitingRoom () {
   const { gameId } = useParams()
@@ -70,14 +71,14 @@ export default function WaitingRoom () {
         width: '100%',
         flexDirection: 'column'
       }}>
-        <Paper style={{ minWidth: '355px', maxWidth: '600px', margin: '20px', padding: '10px', backgroundColor: '#488A60', marginTop: '80px' }}>
+        <Paper style={{ opacity: '.9', minWidth: '355px', maxWidth: '600px', margin: '20px', padding: '10px', backgroundColor: '#09241F', marginTop: '100px', border: '2px solid black', borderRadius: '10px' }}>
           <Container style={{ padding: '10px' }}>
             <Typography color='white' variant="h4" align="center" gutterBottom>
               Waiting Room
             </Typography>
             <Typography color='white' variant="h5" align="center" gutterBottom>Room Code: <Typography variant='h4' color='peachpuff'>{gameId}</Typography></Typography>
 
-            <List style={{ marginBottom: '20px', backgroundColor: '#ffffff' }}>
+            <List style={{ border: '3px solid black', borderRadius: '10px', marginBottom: '20px', backgroundColor: '#ffffff' }}>
               {players.map((player, index) => (
                 <div key={player.userId}>
                   <ListItem button>
@@ -93,13 +94,14 @@ export default function WaitingRoom () {
             </List>
           </Container>
         </Paper>
-        <Button
-          variant="contained"
-          color="warning"
-          onClick={leaveGame}
-        >
-          Leave Game
-        </Button>
+        <Grid maxWidth='415px' style={{ width: '355', padding: '10px' }} container spacing={2} justify="center">
+          <Grid item xs={6}>
+            <MyButton onClick={leaveGame} label='Leave Game' gradient='warning' />
+          </Grid>
+          <Grid item xs={6}>
+            <MyButton onClick={leaveGame} label='Start Game' gradient='primary' />
+          </Grid>
+        </Grid>
         <ChatFeed messages={messages} gameId={gameId} currentUserId={me.userId} />
       </div>
     </div>
