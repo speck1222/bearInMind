@@ -1,4 +1,4 @@
-const redisClient = require('./RedisClient')
+
 const express = require('express')
 const { createServer } = require('http')
 const { Server } = require('socket.io')
@@ -7,7 +7,7 @@ const { refreshUserSession, fetchMe } = require('./socketUtils/userUtils')
 const { fetchPlayers, joinGame, leaveGame } = require('./socketUtils/joinUtils')
 const { fetchMessages, sendMessage } = require('./socketUtils/chatUtils')
 
-const PORT = process.env.PORT || 3001
+const PORT = 3001
 const origin = 'http://localhost:3000'
 
 const runApplication = async () => {
@@ -16,7 +16,7 @@ const runApplication = async () => {
   const httpServer = createServer(app)
   const io = new Server(httpServer, {
     cors: {
-      origin
+      origin: '*'
     }
   })
 
