@@ -26,7 +26,7 @@ const runApplication = async () => {
   // const server = new WebSocket.Server({ port : PORT })
 
   io.use(async (socket, next) => {
-    refreshUserSession(socket)
+    await refreshUserSession(socket)
     return next()
   })
 

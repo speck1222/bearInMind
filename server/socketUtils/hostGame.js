@@ -1,6 +1,7 @@
 const redisClient = require('../RedisClient')
 const { joinGame } = require('./joinUtils')
 const { getUserId } = require('./userUtils')
+const { sendServerMessage } = require('./chatUtils')
 
 function generateGameCode () {
   const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
@@ -28,10 +29,10 @@ async function initGame (io, socket, userName) {
 
 async function countDown (io, socket, code) {
   const countDown = 3
-  io.sockets.in(code).emit('countDown', 'Starting in...')
+  sendServerMessage(io, code, 'Starting in...')
   await new Promise(resolve => setTimeout(resolve, 1000))
   for (let i = countDown; i > 0; i--) {
-    io.sockets.in(code).emit('countDown', i)
+    sendServerMessage(io, code, `${i}...`)
     await new Promise(resolve => setTimeout(resolve, 1000))
   }
 }

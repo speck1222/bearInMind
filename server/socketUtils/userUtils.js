@@ -7,6 +7,11 @@ async function getUserId (socket) {
   return userId
 }
 
+async function getUserName (userId) {
+  userId = await redisClient.get(`users:${userId}:userName`)
+  return userId
+}
+
 async function setUserName (socket, userName) {
   const userId = await getUserId(socket)
   await redisClient.set(`users:${userId}:userName`, userName)
@@ -20,32 +25,16 @@ const createNewSession = async (sessionId, userId) => {
 const handleExistingSession = async (sessionId, socket) => {
   const userId = await redisClient.get(`session:${sessionId}:userId`)
   if (userId) {
-    console.log('existing userId', userId)
     const currentGame = await redisClient.get(`users:${userId}:currentGame`)
     if (currentGame) {
       socket.join(currentGame)
       fetchMe(socket)
-      // const gameStarted = await redisClient.get(`games:${currentGame}:started`)
-      // socket.emit('joined game', currentGame)
-      // if (gameStarted === '1') {
-      //   socket.emit('game started', currentGame)
-      // }
     }
   } else {
     console.log('create new userId')
     const newUserId = v4()
     await createNewSession(sessionId, newUserId)
   }
-}
-
-const fetchMe = async (socket) => {
-  const sessionId = socket.handshake.auth.sessionID
-  const userId = await redisClient.get(`session:${sessionId}:userId`)
-  const userName = await redisClient.get(`users:${userId}:userName`)
-  const currentGame = await redisClient.get(`users:${userId}:currentGame`)
-  const gameStarted = await redisClient.get(`games:${currentGame}:started`)
-  const isHost = await redisClient.get(`games:${currentGame}:host`) === userId
-  socket.emit('fetched me', { userId, userName, currentGame, gameStarted, isHost })
 }
 
 const refreshUserSession = async (socket) => {
@@ -67,7 +56,18 @@ const refreshUserSession = async (socket) => {
   }
 }
 
+const fetchMe = async (socket) => {
+  const sessionId = socket.handshake.auth.sessionID
+  const userId = await redisClient.get(`session:${sessionId}:userId`)
+  const userName = await redisClient.get(`users:${userId}:userName`)
+  const currentGame = await redisClient.get(`users:${userId}:currentGame`)
+  const gameStarted = await redisClient.get(`games:${currentGame}:started`)
+  const isHost = await redisClient.get(`games:${currentGame}:host`) === userId
+  socket.emit('fetched me', { userId, userName, currentGame, gameStarted, isHost })
+}
+
 module.exports.getUserId = getUserId
 module.exports.setUserName = setUserName
 module.exports.refreshUserSession = refreshUserSession
 module.exports.fetchMe = fetchMe
+module.exports.getUserName = getUserName

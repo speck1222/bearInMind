@@ -21,9 +21,20 @@ async function sendMessage (io, socket, code, message) {
   }
   await redisClient.rpush(`games:${code}:messages`, JSON.stringify(messageObject))
   console.log('Emitting message to room', code)
-  socket.to(code).emit('new message', messageObject)
-  socket.emit('new message', messageObject)
+  io.sockets.in(code).emit('new message', messageObject)
+}
+
+async function sendServerMessage (io, code, message) {
+  const messageId = v4()
+  const messageObject = {
+    messageId,
+    message,
+    userName: 'System'
+  }
+  await redisClient.rpush(`games:${code}:messages`, JSON.stringify(messageObject))
+  io.sockets.in(code).emit('new message', messageObject)
 }
 
 module.exports.fetchMessages = fetchMessages
 module.exports.sendMessage = sendMessage
+module.exports.sendServerMessage = sendServerMessage

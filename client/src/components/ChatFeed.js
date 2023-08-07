@@ -40,13 +40,7 @@ const ChatFeed = ({ gameId }) => {
       setMessages(messages)
     })
     socket.on('new message', (message) => {
-      console.log('new message', message)
       setMessages((messages) => [...messages, message])
-      scrollToBottom()
-    })
-
-    socket.on('countDown', (count) => {
-      setMessages((messages) => [...messages, { message: count }])
       scrollToBottom()
     })
 
@@ -63,7 +57,9 @@ const ChatFeed = ({ gameId }) => {
           <List style={{ }}>
             {messages.map((message, index) => (
               <ListItem style={{ padding: '1px 0' }} key={message.messageId}>
-                <ListItemText primary={`${message.userName ? message.userName + ': ' : ''}${message.message}`} ref={index === messages.length - 1 ? chatBoxRef : null} />
+                {message.userName === 'System'
+                  ? <ListItemText ref={index === messages.length - 1 ? chatBoxRef : null} primary={<Typography variant="caption" color="textSecondary">{message.message} </Typography>} />
+                  : <ListItemText primary={`${message.userName ? message.userName + ': ' : ''}${message.message}`} ref={index === messages.length - 1 ? chatBoxRef : null} />}
               </ListItem>
             ))}
           </List>

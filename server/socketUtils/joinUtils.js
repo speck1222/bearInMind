@@ -1,5 +1,6 @@
 const redisClient = require('../RedisClient')
-const { setUserName, getUserId, refreshUserSession, fetchMe } = require('./userUtils')
+const { setUserName, getUserId, fetchMe, getUserName } = require('./userUtils')
+const { sendServerMessage } = require('./chatUtils')
 
 const gameExists = async (code) => {
   const gameExists = await redisClient.exists(`games:${code}:started`)
@@ -44,6 +45,7 @@ async function joinGame (io, socket, code, userName) {
   // emit to all players in game room
   const players = await getPlayers(code)
   socket.to(code).emit('fetched players', players)
+  sendServerMessage(io, code, `${userName} has joined the game.`)
 }
 
 async function fetchPlayers (io, socket, code) {
@@ -54,6 +56,7 @@ async function fetchPlayers (io, socket, code) {
 
 async function leaveGame (io, socket, code) {
   const userId = await getUserId(socket)
+  const userName = await getUserName(userId)
   await redisClient.lrem(`games:${code}:players`, 0, userId)
   await redisClient.del(`users:${userId}:currentGame`)
   await redisClient.del(`users:${userId}:userName`)
@@ -71,6 +74,7 @@ async function leaveGame (io, socket, code) {
     await redisClient.set(`games:${code}:host`, players[0].userId)
     players = await getPlayers(code)
   }
+  sendServerMessage(io, code, `${userName} has left the game.`)
   socket.to(code).emit('fetched players', players)
 }
 
