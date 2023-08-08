@@ -4,8 +4,11 @@ import React, { useRef, useState, useEffect } from 'react'
 import Hand from './Card'
 import { useParams } from 'react-router-dom'
 import MyButton from '../../components/Button'
+import zIndex from '@mui/material/styles/zIndex'
+import { motion } from 'framer-motion'
 
 export default function GamePage ({ gameId, me }) {
+  const constraintsRef = useRef(null)
   console.log(gameId)
   const socket = useSocket()
   const [gameState, setGameState] = useState(null)
@@ -24,8 +27,20 @@ export default function GamePage ({ gameId, me }) {
 
   console.log(gameState)
   return (
-    <div>
-      <Hand cards={gameState.myHand} />
+    <div
+
+      style={{
+        marginTop: '50px',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        width: '100%',
+        flexDirection: 'column'
+      }}>
+      <motion.div ref={constraintsRef} style={{ overflow: 'hidden', border: '3px solid black', height: '630px', width: '400px' }}>
+
+        <Hand cards={gameState.myHand} constraintsRef={constraintsRef} />
+      </motion.div>
     </div>
   )
 }

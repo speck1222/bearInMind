@@ -1,30 +1,21 @@
-import React, { useRef, useState } from 'react'
+import React, { useRef, useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import MyButton from '../../components/Button'
+import zIndex from '@mui/material/styles/zIndex'
+import { drawerClasses } from '@mui/material'
 
 const containerStyle = {
   display: 'flex',
-  overflowX: 'scroll',
-  overflowY: 'hidden',
   width: '100%',
-  marginTop: '460px',
   padding: '10px 0',
   whiteSpace: 'nowrap',
-  WebkitOverflowScrolling: 'touch',
-  /* Hide scrollbar for Chrome, Safari, and Opera */
-  '&::WebkitScrollbar': {
-    display: 'none'
-  },
-
-  /* Hide scrollbar for Firefox */
-  scrollbarWidth: 'none',
-
-  /* Hide scrollbar for IE and Edge */
-  msOverflowStyle: 'none'
+  position: 'relative',
+  marginTop: '40px'
 }
 
-const Hand = ({ cards }) => {
+const Hand = ({ cards, constraintsRef }) => {
   const [isPlaying, setIsPlaying] = useState(false)
+
   const cardStyle = {
     border: '2px solid black',
     backgroundColor: 'white',
@@ -36,37 +27,44 @@ const Hand = ({ cards }) => {
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
-    transition: 'translate 1s ease-in-out',
+    flexShrink: 0
+  }
+
+  const cardHolderStyle = {
+    border: '2px solid black',
+    backgroundColor: 'green',
+    borderRadius: '5px',
+    width: '140px',
+    height: '180px',
+    margin: '10px',
+    boxShadow: '1px 1px 5px rgba(0, 0, 0, 0.3)',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
     flexShrink: 0,
-    transform: 'translateY(7px)'
+    zIndex: 1
   }
 
   const firstCardStyle = {
     ...cardStyle,
-    height: '147px',
-    transition: 'transform .8s ease-in-out'
-  }
-
-  const playCardAnimation = {
-    x: isPlaying ? window.innerWidth / 2 - 70 : 0, // Assuming card width is 100px
-    y: isPlaying ? window.innerHeight / 2 - 800 : 0, // Assuming card height is 140px
-    position: isPlaying ? 'fixed' : 'relative',
-    zIndex: isPlaying ? 1 : 0
+    height: '147px'
   }
 
   return (
-    <div>
-      <MyButton onClick={() => setIsPlaying(true)} label='Play' />
-      <div style={containerStyle}>
-      {cards.map((card, index) => (
-        index === 0
-          ? <motion.div key={index} style={{ ...firstCardStyle, ...playCardAnimation }} transition={{ duration: 0.9 }}>
+    <div style={{ marginTop: '400px' }} >
+      <div style={containerStyle} >
+        <div style={cardHolderStyle}>
+          <motion.div style={{ ...firstCardStyle }} drag dragConstraints={constraintsRef}>
+            <h1>{cards[0]}</h1>
+          </motion.div>
+        </div>
+        <motion.div style={containerStyle} drag='x' dragConstraints={{ top: 0, right: 0, bottom: 0, left: -300 }}>
+        {cards.slice(1).map((card, index) => (
+            <div key={index} style={cardStyle}>
               <h1>{card}</h1>
-            </motion.div>
-          : <motion.div key={index} style={cardStyle}>
-              <h1>{card}</h1>
-            </motion.div>
-      ))}
+            </div>
+        ))}
+        </motion.div>
       </div>
     </div>
   )

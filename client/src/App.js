@@ -65,7 +65,7 @@ function App () {
   }
 
   return (
-      <div className="App">
+      <div className="App" >
         {socketAlert && (
           <AlertModal open={true} type={socketAlert.type} message={socketAlert.message} handleClose={handleCloseAlert}/>
         )}
