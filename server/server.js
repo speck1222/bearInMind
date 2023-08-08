@@ -2,7 +2,7 @@
 const express = require('express')
 const { createServer } = require('http')
 const { Server } = require('socket.io')
-const { initGame, startGame } = require('./socketUtils/hostGame')
+const { initGame, startGame, fetchGameState } = require('./socketUtils/gameUtils')
 const { refreshUserSession, fetchMe } = require('./socketUtils/userUtils')
 const { fetchPlayers, joinGame, leaveGame } = require('./socketUtils/joinUtils')
 const { fetchMessages, sendMessage } = require('./socketUtils/chatUtils')
@@ -42,6 +42,7 @@ const runApplication = async () => {
     socket.on('fetch messages', async (code) => await fetchMessages(io, socket, code))
     socket.on('send message', async (code, message) => await sendMessage(io, socket, code, message))
     socket.on('start game', async (code) => await startGame(io, socket, code))
+    socket.on('fetch game state', async (code) => await fetchGameState(io, socket, code))
   })
 
   httpServer.listen(PORT)

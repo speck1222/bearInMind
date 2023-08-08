@@ -9,6 +9,7 @@ const gameExists = async (code) => {
 
 async function getPlayers (code) {
   const playerIds = await redisClient.lrange(`games:${code}:players`, 0, -1)
+  console.log('playerIds', playerIds)
   const hostId = await redisClient.get(`games:${code}:host`)
   const players = await Promise.all(playerIds.map(async (Id) => {
     const userName = await redisClient.get(`users:${Id}:userName`)
@@ -35,6 +36,7 @@ async function joinGame (io, socket, code, userName) {
   const userId = await getUserId(socket)
   if (!userId) {
     socket.emit('alert', 'error', 'User does not exist! Try refreshing the browser.')
+    return
   }
   await setUserName(socket, userName)
   await redisClient.rpush(`games:${code}:players`, userId)
@@ -82,3 +84,4 @@ module.exports.joinGame = joinGame
 module.exports.fetchPlayers = fetchPlayers
 module.exports.isPlayerInGame = isPlayerInGame
 module.exports.leaveGame = leaveGame
+module.exports.getPlayers = getPlayers

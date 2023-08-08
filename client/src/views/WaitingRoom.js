@@ -78,13 +78,15 @@ export default function WaitingRoom ({ gameId, me }) {
             </List>
           </Container>
         </Paper>
-        <Grid maxWidth='415px' style={{ width: '355', padding: '10px' }} container spacing={2} justify="center">
-          <Grid item xs={6}>
+        <Grid maxWidth='415px' style={{ width: '355', padding: '10px' }} container spacing={2} alignItems="center" justify="center">
+        <Grid item xs={me.isHost ? 6 : 12}>
             <MyButton onClick={leaveGame} label='Leave Game' gradient='warning' />
           </Grid>
-          <Grid item xs={6}>
-            <MyButton onClick={startGame} label='Start Game' gradient='primary' />
-          </Grid>
+          {me.isHost &&
+            <Grid item xs={6}>
+              <MyButton onClick={startGame} label='Start Game' gradient='primary' />
+            </Grid>
+          }
         </Grid>
         <ChatFeed gameId={gameId} currentUserId={me.userId} />
       </div>

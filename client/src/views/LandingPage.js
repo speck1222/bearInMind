@@ -14,6 +14,7 @@ export default function LandingPage () {
 
   function onCodeChange (event) {
     const uppercaseValue = event.target.value.toUpperCase()
+    if (uppercaseValue.length > 4) return
     setCode(uppercaseValue)
   }
 

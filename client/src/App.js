@@ -1,27 +1,21 @@
-import React, { useCallback, useState } from 'react'
-import logo from './logo.svg'
+import React, { useState } from 'react'
 import './App.css'
 import { useSocket } from './websocket/useSocket'
 import LandingPage from './views/LandingPage'
-import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom'
 import ButtonAppBar from './components/AppBar'
-import GamePage from './views/GamePage'
-import HostPage from './views/HostPage'
-import JoinPage from './views/JoinPage'
-import { useFetch } from './utils/useFetch'
-import { Alert } from '@mui/material'
-import { v4 as uuidv4 } from 'uuid'
+import GamePage from './views/game/GamePage'
 import WaitingRoom from './views/WaitingRoom'
 import Dialog from '@mui/material/Dialog'
 import DialogTitle from '@mui/material/DialogTitle'
 import DialogContent from '@mui/material/DialogContent'
 import DialogActions from '@mui/material/DialogActions'
-import Button from '@mui/material/Button'
+import MyButton from './components/Button'
 
 function App () {
   const [socketAlert, setSocketAlert] = useState(null)
   const socket = useSocket()
   const [gameStarted, setGameStarted] = useState(false)
+  const [gameState, setGameState] = useState(null)
   const [me, setMe] = useState(null)
 
   function handleCloseAlert () {
@@ -47,10 +41,16 @@ function App () {
       const data = { type, message }
       setSocketAlert(data)
     })
+    socket.on('fetched game state', (gameState) => {
+      setGameState(gameState)
+    })
     return () => {
       socket.off('alert')
+      socket.off('fetched me')
+      socket.off('fetched game state')
+      socket.off('start game')
     }
-  }, [socketAlert])
+  }, [])
 
   if (!me) return (<div>Loading...</div>)
 
@@ -97,8 +97,7 @@ function AlertModal ({ open, handleClose, type, message, title = '' }) {
         borderRadius: '20px', // This controls the roundness of the corners
         boxShadow: '0 5px 15px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.5)',
         fontWeight: 'bold',
-        fontSize: '18px',
-        fontFamily: "'Comic Sans MS', cursive, sans-serif"
+        fontSize: '18px'
       }
     }} open={open} onClose={handleClose}>
         <DialogTitle>{title}</DialogTitle>
@@ -106,20 +105,7 @@ function AlertModal ({ open, handleClose, type, message, title = '' }) {
           {message}
         </DialogContent>
         <DialogActions>
-          <Button
-            onClick={handleClose}
-            style={{ ...modalStyle, backgroundColor: 'rgb(255, 233, 200)' }}
-            onMouseOver={(e) => {
-              e.currentTarget.style.transform = 'scale(1.05)'
-              e.currentTarget.style.boxShadow = '0 10px 20px rgba(0, 0, 0, 0.15)'
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.transform = 'scale(1)'
-              e.currentTarget.style.boxShadow = '0 5px 15px rgba(0, 0, 0, 0.1)'
-            }}
-          >
-            Close
-          </Button>
+          <MyButton onClick={handleClose} label="Close" width='80px' />
         </DialogActions>
     </Dialog>
   )

@@ -3,7 +3,7 @@ import Button from '@mui/material/Button'
 import Typography from '@mui/material/Typography'
 import { green } from '@mui/material/colors'
 
-function MyButton ({ onClick, label, disabled, gradient }) {
+function MyButton ({ onClick, label, disabled, gradient, width }) {
   const [isPressed, setIsPressed] = useState(false)
   const altGradient = 'linear-gradient(to bottom, rgba(255, 233, 200, 1) 0%, rgba(255, 220, 180, 1) 50%, rgba(255, 210, 170, 1) 100%)'
   const primaryGradient = 'linear-gradient(to bottom, rgba(0, 255, 0, 1) 0%, rgba(0, 191, 0, 1) 50%, rgba(0, 127, 0, 1) 100%)'
@@ -40,7 +40,7 @@ function MyButton ({ onClick, label, disabled, gradient }) {
       }}
       style={{
         opacity: disabled ? 0.5 : 1,
-        width: '100%',
+        width: width || '100%',
         background: gradientStyle,
         border: '3px solid black',
         borderRadius: '10px',
