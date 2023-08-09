@@ -50,7 +50,7 @@ async function startGame (io, socket, code) {
   }
   await redisClient.set(`games:${code}:started`, 1)
   await countDown(io, socket, code)
-  await dealCards(code, 4)
+  await dealCards(code, 10)
   io.sockets.in(code).emit('start game')
 }
 
@@ -67,29 +67,23 @@ async function dealCards (code, numCards) {
   const deck = Array.from({ length: 100 }, (_, i) => i + 1)
   const shuffledDeck = shuffleDeck(deck)
   for (const player of players) {
-    console.log('Dealing cards to', player.userId)
     const hand = shuffledDeck.splice(0, numCards)
     const sortedHand = hand.sort((a, b) => a - b)
-    console.log(`Dealing ${hand.length} cards to ${player.userName}`, sortedHand)
     await redisClient.rpush(`games:${code}:hands:${player.userId}`, sortedHand)
   }
 }
 
 async function fetchGameState (io, socket, code) {
   const userId = await getUserId(socket)
-  console.log('game code', code)
   if (!code) {
     socket.emit('alert', 'error', 'Game does not exist!')
     return
   }
   const players = await getPlayers(code)
-  console.log('Players', players)
   let myHand = []
   const cardCounts = await Promise.all(players.map(async (player) => {
     const hand = await redisClient.lrange(`games:${code}:hands:${player.userId}`, 0, -1)
-    console.log('Hand', hand)
     if (player.userId === userId) {
-      console.log('Found my hand', hand)
       myHand = hand
     }
     return { userId: player.userId, userName: player.userName, numCards: hand.length }
@@ -97,8 +91,21 @@ async function fetchGameState (io, socket, code) {
   socket.emit('fetched game state', { myHand, players, cardCounts })
 }
 
+async function playCard (io, socket, code, card) {
+  const userId = await getUserId(socket)
+  const hand = await redisClient.lrange(`games:${code}:hands:${userId}`, 0, -1)
+  const cardIndex = hand.indexOf(card)
+  if (cardIndex === -1) {
+    socket.emit('alert', 'error', 'You do not have that card!')
+    return
+  }
+  await redisClient.lrem(`games:${code}:hands:${userId}`, 0, card)
+  io.sockets.in(code).emit('played card', { userId, card })
+}
+
 module.exports.initGame = initGame
 module.exports.startGame = startGame
 module.exports.isHost = isHost
 module.exports.dealCards = dealCards
 module.exports.fetchGameState = fetchGameState
+module.exports.playCard = playCard

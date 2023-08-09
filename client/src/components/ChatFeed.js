@@ -22,7 +22,6 @@ const ChatFeed = ({ gameId }) => {
   }
 
   const sendMessage = () => {
-    console.log('sending message', message)
     socket.emit('send message', gameId, message)
     setMessage('')
   }

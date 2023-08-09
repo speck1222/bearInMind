@@ -9,7 +9,6 @@ async function fetchMessages (io, socket, code) {
 }
 
 async function sendMessage (io, socket, code, message) {
-  console.log('Sending message', message)
   const userId = await getUserId(socket)
   const userName = await redisClient.get(`users:${userId}:userName`)
   const messageId = v4()
@@ -20,7 +19,6 @@ async function sendMessage (io, socket, code, message) {
     message
   }
   await redisClient.rpush(`games:${code}:messages`, JSON.stringify(messageObject))
-  console.log('Emitting message to room', code)
   io.sockets.in(code).emit('new message', messageObject)
 }
 

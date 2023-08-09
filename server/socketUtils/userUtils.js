@@ -31,7 +31,6 @@ const handleExistingSession = async (sessionId, socket) => {
       fetchMe(socket)
     }
   } else {
-    console.log('create new userId')
     const newUserId = v4()
     await createNewSession(sessionId, newUserId)
   }

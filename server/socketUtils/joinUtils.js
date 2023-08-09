@@ -9,7 +9,6 @@ const gameExists = async (code) => {
 
 async function getPlayers (code) {
   const playerIds = await redisClient.lrange(`games:${code}:players`, 0, -1)
-  console.log('playerIds', playerIds)
   const hostId = await redisClient.get(`games:${code}:host`)
   const players = await Promise.all(playerIds.map(async (Id) => {
     const userName = await redisClient.get(`users:${Id}:userName`)
@@ -51,7 +50,6 @@ async function joinGame (io, socket, code, userName) {
 }
 
 async function fetchPlayers (io, socket, code) {
-  console.log('Fetching players')
   const players = await getPlayers(code)
   socket.emit('fetched players', players)
 }

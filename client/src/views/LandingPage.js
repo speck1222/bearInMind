@@ -27,7 +27,6 @@ export default function LandingPage () {
   }
 
   function hostGame () {
-    console.log('hosting game')
     socket.emit('init game', name)
   }
   const backgroundImageStyle = {

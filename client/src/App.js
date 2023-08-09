@@ -27,7 +27,6 @@ function App () {
 
     socket.on('fetched me', (me) => {
       setMe(me)
-      console.log(me)
       if (me.gameStarted) {
         setGameStarted(Number(me.gameStarted))
       }
@@ -56,11 +55,11 @@ function App () {
 
   const renderPage = () => {
     if (me.currentGame && !gameStarted) {
-      return <WaitingRoom gameId={me.currentGame} me={me}/>
+      return <div><ButtonAppBar/><WaitingRoom gameId={me.currentGame} me={me}/></div>
     } else if (me.currentGame && gameStarted) {
       return <GamePage gameId={me.currentGame} me={me}/>
     } else {
-      return <LandingPage/>
+      return <div><ButtonAppBar/><LandingPage/></div>
     }
   }
 
@@ -69,7 +68,6 @@ function App () {
         {socketAlert && (
           <AlertModal open={true} type={socketAlert.type} message={socketAlert.message} handleClose={handleCloseAlert}/>
         )}
-        <ButtonAppBar/>
         {renderPage()}
       </div>
   )
