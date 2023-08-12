@@ -88,7 +88,8 @@ async function fetchGameState (io, socket, code) {
     }
     return { userId: player.userId, userName: player.userName, numCards: hand.length }
   }))
-  socket.emit('fetched game state', { myHand, players, cardCounts })
+  const currentCard = await redisClient.get(`games:${code}:currentCard`)
+  socket.emit('fetched game state', { myHand, players, cardCounts, currentCard })
 }
 
 async function playCard (io, socket, code, card) {
@@ -100,7 +101,8 @@ async function playCard (io, socket, code, card) {
     return
   }
   await redisClient.lrem(`games:${code}:hands:${userId}`, 0, card)
-  io.sockets.in(code).emit('played card', { userId, card })
+  await redisClient.set(`games:${code}:currentCard`, card)
+  socket.to(code).emit('played card', { userId, card })
 }
 
 module.exports.initGame = initGame

@@ -1,9 +1,5 @@
-import React, { useRef, useState, useEffect } from 'react'
-import { motion, useAnimation, useForceUpdate, useTransform } from 'framer-motion'
-import MyButton from '../../components/Button'
-import zIndex from '@mui/material/styles/zIndex'
-import { drawerClasses, duration } from '@mui/material'
-
+import React, { useEffect, useState } from 'react'
+import { motion, useAnimation } from 'framer-motion'
 const containerStyle = {
   display: 'flex',
   width: '100%',
@@ -13,24 +9,30 @@ const containerStyle = {
   marginTop: '40px'
 }
 
-const Hand = ({ cards, constraintsRef, playCard }) => {
-  const [isPlaying, setIsPlaying] = useState(false)
-  const [cardIsReturning, setCardIsReturning] = useState(false)
+const Hand = ({ cards, constraintsRef, playCard, dropZoneBounds, startingCardRef, cardHolderPoints }) => {
   const controls = useAnimation()
+  const draggableContainerRef = React.useRef(null)
+  const [draggableWidth, setDraggableWidth] = useState(null)
   async function onDragEnd (event, info) {
     // Example: Check if the card was dropped in a specific area (e.g., x > 200 and y > 200)
-    if ((info.point.x > 136 && info.point.x < 290) && info.point.y < 212) {
-      setIsPlaying(true)
+    if (
+      info.point.x > dropZoneBounds.left &&
+      info.point.x < dropZoneBounds.right &&
+      info.point.y > dropZoneBounds.top &&
+      info.point.y < dropZoneBounds.bottom
+    ) {
+      console.log('Card was dropped in the drop zone!')
+      console.log(cardHolderPoints)
       // Trigger your event here
       controls.start({
-        y: -399,
-        x: 98,
+        ...cardHolderPoints,
         transition: {
           duration: 0.2
         }
       })
-      await new Promise(resolve => setTimeout(resolve, 200))
       playCard(cards[0])
+      await new Promise(resolve => setTimeout(resolve, 200))
+
       controls.start({
         y: 0,
         x: 0,
@@ -39,13 +41,31 @@ const Hand = ({ cards, constraintsRef, playCard }) => {
         }
       })
     } else {
-      setIsPlaying(false)
       controls.start({
         x: 0,
         y: 0
       })
     }
   }
+
+  useEffect(() => {
+    const updateBounds = () => {
+      if (draggableContainerRef.current && constraintsRef.current) {
+        const containerBounds = draggableContainerRef.current.getBoundingClientRect()
+        const containerWidth = (Math.abs(containerBounds.left) + Math.abs(containerBounds.right))
+        setDraggableWidth(containerWidth)
+      }
+    }
+    updateBounds()
+
+    // Set up the event listener
+    window.addEventListener('resize', updateBounds)
+
+    // Clean up the event listener when the component is unmounted
+    return () => {
+      window.removeEventListener('resize', updateBounds)
+    }
+  }, [cards])
 
   const cardStyle = {
     border: '2px solid black',
@@ -83,13 +103,14 @@ const Hand = ({ cards, constraintsRef, playCard }) => {
   }
 
   return (
-    <div style={{ marginTop: '200px' }} >
+    <div style={{ marginTop: '0px' }} >
       <div style={containerStyle} >
-        <div style={cardHolderStyle}>
+        <div ref={startingCardRef} style={cardHolderStyle}>
           {cards[0] && <motion.div
             style={{ ...firstCardStyle }}
             onDragEnd={onDragEnd}
             dragElastic='false'
+            whileDrag={{ scale: 1.2 }}
             drag
             dragConstraints={constraintsRef}
             animate={controls}
@@ -98,7 +119,7 @@ const Hand = ({ cards, constraintsRef, playCard }) => {
           </motion.div>}
 
         </div>
-        <motion.div style={containerStyle} drag='x' dragConstraints={{ top: 0, right: 0, bottom: 0, left: -((cards.length * 110)) }}>
+        <motion.div ref={draggableContainerRef} style={containerStyle} drag='x' dragConstraints={{ top: 0, right: 0, bottom: 0, left: -703 }}>
           {cards.slice(1).map((card, index) => (
             <div key={index} style={cardStyle}>
               <h1>{card}</h1>

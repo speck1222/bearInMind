@@ -5,19 +5,69 @@ import Hand from './Card'
 import { useParams } from 'react-router-dom'
 import MyButton from '../../components/Button'
 import zIndex from '@mui/material/styles/zIndex'
-import { motion } from 'framer-motion'
+import { motion, useAnimation } from 'framer-motion'
+import DiscardDrawer from './DiscardDrawer'
 
 export default function GamePage ({ gameId, me }) {
   const constraintsRef = useRef(null)
+  const dropZoneRef = useRef(null)
+  const cardHolderRef = useRef(null)
+  const startingCardRef = useRef(null)
   const socket = useSocket()
   const [gameState, setGameState] = useState(null)
-  const [isPlaying, setIsPlaying] = useState(false)
   const [cards, setCards] = useState([])
   const [cardPlayed, setCardPlayed] = useState(null)
+  const [cardPlayedAnimation, setCardPlayedAnimation] = useState(null)
+  const [dropZoneBounds, setDropZoneBounds] = useState({ left: 0, right: 0, top: 0, bottom: 0 })
+  const [cardHolderPoints, setCardHolderPoints] = useState({ left: 0, right: 0, top: 0, bottom: 0 })
+  const otherCardControls = useAnimation()
 
-  function playCard (card) {
+  useEffect(() => {
+    const updateBounds = () => {
+      if (dropZoneRef.current) {
+        const bounds = dropZoneRef.current.getBoundingClientRect()
+        setDropZoneBounds(bounds)
+      }
+      if (cardHolderRef.current && startingCardRef.current) {
+        const holderBounds = cardHolderRef.current.getBoundingClientRect()
+        const holderX = (holderBounds.left + holderBounds.right) / 2
+        const holderY = (holderBounds.top + holderBounds.bottom) / 2
+
+        const startingBounds = startingCardRef.current.getBoundingClientRect()
+        const startingX = (startingBounds.left + startingBounds.right) / 2
+        const startingY = (startingBounds.top + startingBounds.bottom) / 2
+
+        setCardHolderPoints({ x: -startingX + holderX, y: -startingY + holderY })
+      }
+    }
+
+    // Call the function initially
+    updateBounds()
+
+    // Set up the event listener
+    window.addEventListener('resize', updateBounds)
+
+    // Clean up the event listener when the component is unmounted
+    return () => {
+      window.removeEventListener('resize', updateBounds)
+    }
+  }, [gameState])
+
+  async function otherCardPlayed (card) {
+    console.log('other card played', card)
+    setCardPlayedAnimation(card.card)
+    // otherCardControls.start({ ...otherCardToHolderPoints })
+    otherCardControls.start({ x: 0, y: -112, transition: { duration: 0.2, scale: 1.2 } })
+    await new Promise(resolve => setTimeout(resolve, 200))
+    setCardPlayed(card.card)
+    otherCardControls.start({ x: 0, y: -600, transition: { duration: 0 } })
+    setCardPlayedAnimation(null)
+  }
+
+  async function playCard (card) {
     socket.emit('play card', gameId, card)
     setCardPlayed(card)
+    await new Promise(resolve => setTimeout(resolve, 200))
     setCards(cards.filter(c => c !== card))
   }
   useEffect(() => {
@@ -25,13 +75,13 @@ export default function GamePage ({ gameId, me }) {
     socket.on('fetched game state', (gameState) => {
       setGameState(gameState)
       setCards(gameState.myHand)
+      setCardPlayed(gameState.currentCard)
+    })
+    socket.on('played card', (card) => {
+      otherCardPlayed(card)
     })
   }, [])
   if (!gameState) return (<div>Loading...</div>)
-
-  function removeFirstCard () {
-    setIsPlaying(true)
-  }
 
   const cardHolderStyle = {
     border: '3px dotted black',
@@ -66,16 +116,20 @@ export default function GamePage ({ gameId, me }) {
         justifyContent: 'center',
         alignItems: 'center',
         width: '100%',
-        flexDirection: 'column'
+        flexDirection: 'column',
+        height: '100vh'
       }}>
-      <motion.div ref={constraintsRef} style={{ overflow: 'hidden', border: '3px solid black', height: '630px', width: '360px' }}>
+      <motion.div animate={otherCardControls} style={{ ...cardStyle, position: 'absolute', y: '-600px' }}> <h1>{cardPlayedAnimation}</h1></motion.div>
+      <motion.div ref={constraintsRef} style={{ overflow: 'hidden', border: '3px solid black', height: '630px', width: '98%' }}>
+      <DiscardDrawer />
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%' }}>
-          <div style={cardHolderStyle}>
-            {cardPlayed && <div style={cardStyle}> <h1>{cardPlayed}</h1></div>}
-
+          <div ref={dropZoneRef} style={{ paddingBottom: '90px', paddingTop: '80px', paddingLeft: '32%', paddingRight: '32%' }}>
+            <div ref={cardHolderRef} style={cardHolderStyle}>
+              {cardPlayed && <div style={cardStyle}> <h1>{cardPlayed}</h1></div>}
+            </div>
           </div>
         </div>
-        <Hand cards={cards} constraintsRef={constraintsRef} playCard={playCard} />
+        <Hand cards={cards} constraintsRef={constraintsRef} playCard={playCard} dropZoneBounds={dropZoneBounds} startingCardRef={startingCardRef} cardHolderPoints={cardHolderPoints} />
       </motion.div>
     </div>
   )
