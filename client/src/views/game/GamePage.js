@@ -3,6 +3,7 @@ import React, { useRef, useState, useEffect } from 'react'
 import Hand from './Card'
 import OutOfSyncModal from '../../components/OutOfSyncModal'
 import { motion, useAnimation } from 'framer-motion'
+import RoundStartModal from '../../components/RoundStartModal'
 
 export default function GamePage ({ gameId, me }) {
   const constraintsRef = useRef(null)
@@ -12,6 +13,8 @@ export default function GamePage ({ gameId, me }) {
   const socket = useSocket()
   const [outOfSync, setOutOfSync] = useState(false)
   const [outOfSyncDetails, setOutOfSyncDetails] = useState({})
+  const [isPaused, setIsPaused] = useState(false)
+  const [pauseDetails, setPauseDetails] = useState({})
   const [pauseCountdown, setPauseCountdown] = useState(false)
   const [gameState, setGameState] = useState(null)
   const [cards, setCards] = useState([])
@@ -69,6 +72,8 @@ export default function GamePage ({ gameId, me }) {
     setCardPlayed(gameState.currentCard)
     setOutOfSync(gameState.outOfSync === '1')
     setOutOfSyncDetails(gameState.outOfSyncDetails)
+    setIsPaused(gameState.paused === '1')
+    setPauseDetails(gameState.pauseDetails)
   }
 
   async function playCard (card) {
@@ -80,10 +85,14 @@ export default function GamePage ({ gameId, me }) {
   function handleReadyOutOfSync () {
     socket.emit('is ready out of sync', gameId)
   }
+  function handleReadyNewRound () {
+    socket.emit('is ready new round', gameId)
+  }
 
   useEffect(() => {
     socket.emit('fetch game state', gameId)
     socket.on('fetched game state', (gameState) => {
+      console.log('fetched game state', gameState)
       handleGameState(gameState)
     })
     socket.on('played card', (data) => {
@@ -103,6 +112,16 @@ export default function GamePage ({ gameId, me }) {
     })
     socket.on('pause countdown', (count) => {
       setPauseCountdown(count)
+    })
+    socket.on('new round', (pauseDetails) => {
+      setIsPaused(true)
+      setPauseDetails(pauseDetails)
+    })
+    socket.on('resolved new round', () => {
+      setIsPaused(false)
+      setPauseDetails({})
+      setPauseCountdown(false)
+      socket.emit('fetch game state', gameId)
     })
   }, [])
   if (!gameState) return (<div>Loading...</div>)
@@ -132,6 +151,7 @@ export default function GamePage ({ gameId, me }) {
     alignItems: 'center',
     flexShrink: 0
   }
+  console.log(cardPlayed)
 
   return (
     <div
@@ -144,6 +164,7 @@ export default function GamePage ({ gameId, me }) {
         height: '100vh'
       }}>
       <OutOfSyncModal handleReady={handleReadyOutOfSync} open={outOfSync} outOfSyncDetails={outOfSyncDetails} pauseCountdown={pauseCountdown} />
+      <RoundStartModal handleReady={handleReadyNewRound} open={isPaused} roundInfo={pauseDetails} pauseCountdown={pauseCountdown} />
       <motion.div animate={otherCardControls} style={{ ...cardStyle, position: 'absolute', y: '-600px' }}> <h1>{cardPlayedAnimation}</h1></motion.div>
       <motion.div ref={constraintsRef} style={{ overflow: 'hidden', border: '3px solid black', height: '630px', width: '98%' }}>
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%' }}>
