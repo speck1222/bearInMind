@@ -2,7 +2,7 @@
 const express = require('express')
 const { createServer } = require('http')
 const { Server } = require('socket.io')
-const { initGame, startGame, fetchGameState, playCard, isReadyOutOfSync, deleteGame } = require('./socketUtils/gameUtils')
+const { initGame, startGame, fetchGameState, playCard, isReadyOutOfSync, deleteGame, isReadyNewRound } = require('./socketUtils/gameUtils')
 const { refreshUserSession, fetchMe } = require('./socketUtils/userUtils')
 const { fetchPlayers, joinGame, leaveGame, getCurrentGame } = require('./socketUtils/joinUtils')
 const { fetchMessages, sendMessage } = require('./socketUtils/chatUtils')
@@ -61,6 +61,7 @@ const runApplication = async () => {
     socket.on('fetch game state', (code) => safeEmit(fetchGameState, io, socket, code))
     socket.on('play card', (code, card) => safeEmit(playCard, io, socket, code, card))
     socket.on('is ready out of sync', (code) => safeEmit(isReadyOutOfSync, io, socket, code))
+    socket.on('is ready new round', (code) => safeEmit(isReadyNewRound, io, socket, code))
   })
 
   httpServer.listen(PORT)

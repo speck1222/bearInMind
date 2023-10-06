@@ -1,7 +1,11 @@
 const redisClient = require('../RedisClient')
 const { setUserName, getUserId, fetchMe, getUserName } = require('./userUtils')
 const { sendServerMessage } = require('./chatUtils')
-const { deleteGame } = require('./gameUtils')
+const { deleteKeysWithPrefix } = require('../redisUtils/utils')
+
+async function deleteGame (code) {
+  await deleteKeysWithPrefix(redisClient, `games:${code}`)
+}
 
 const gameExists = async (code) => {
   const gameExists = await redisClient.exists(`games:${code}:started`)
