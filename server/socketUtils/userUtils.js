@@ -59,9 +59,14 @@ const fetchMe = async (socket) => {
   const sessionId = socket.handshake.auth.sessionID
   const userId = await redisClient.get(`session:${sessionId}:userId`)
   const userName = await redisClient.get(`users:${userId}:userName`)
-  const currentGame = await redisClient.get(`users:${userId}:currentGame`)
+  let currentGame = await redisClient.get(`users:${userId}:currentGame`)
   const gameStarted = await redisClient.get(`games:${currentGame}:started`)
   const isHost = await redisClient.get(`games:${currentGame}:host`) === userId
+  const gameExists = await redisClient.exists(`games:${currentGame}:started`)
+  if (!gameExists) {
+    await redisClient.del(`users:${userId}:currentGame`)
+    currentGame = null
+  }
   socket.emit('fetched me', { userId, userName, currentGame, gameStarted, isHost })
 }
 

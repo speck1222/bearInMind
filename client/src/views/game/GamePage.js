@@ -1,12 +1,8 @@
-import { Paper, Card } from '@mui/material'
 import { useSocket } from '../../websocket/useSocket'
 import React, { useRef, useState, useEffect } from 'react'
 import Hand from './Card'
-import { useParams } from 'react-router-dom'
-import MyButton from '../../components/Button'
-import zIndex from '@mui/material/styles/zIndex'
+import OutOfSyncModal from '../../components/OutOfSyncModal'
 import { motion, useAnimation } from 'framer-motion'
-import DiscardDrawer from './DiscardDrawer'
 
 export default function GamePage ({ gameId, me }) {
   const constraintsRef = useRef(null)
@@ -14,6 +10,9 @@ export default function GamePage ({ gameId, me }) {
   const cardHolderRef = useRef(null)
   const startingCardRef = useRef(null)
   const socket = useSocket()
+  const [outOfSync, setOutOfSync] = useState(false)
+  const [outOfSyncDetails, setOutOfSyncDetails] = useState({})
+  const [pauseCountdown, setPauseCountdown] = useState(false)
   const [gameState, setGameState] = useState(null)
   const [cards, setCards] = useState([])
   const [cardPlayed, setCardPlayed] = useState(null)
@@ -55,30 +54,55 @@ export default function GamePage ({ gameId, me }) {
 
   async function otherCardPlayed (card) {
     console.log('other card played', card)
-    setCardPlayedAnimation(card.card)
+    setCardPlayedAnimation(card)
     // otherCardControls.start({ ...otherCardToHolderPoints })
     otherCardControls.start({ x: 0, y: -112, transition: { duration: 0.2, scale: 1.2 } })
     await new Promise(resolve => setTimeout(resolve, 200))
-    setCardPlayed(card.card)
+    setCardPlayed(card)
     otherCardControls.start({ x: 0, y: -600, transition: { duration: 0 } })
     setCardPlayedAnimation(null)
   }
 
+  function handleGameState (gameState) {
+    setGameState(gameState)
+    setCards(gameState.myHand)
+    setCardPlayed(gameState.currentCard)
+    setOutOfSync(gameState.outOfSync === '1')
+    setOutOfSyncDetails(gameState.outOfSyncDetails)
+  }
+
   async function playCard (card) {
     socket.emit('play card', gameId, card)
+    await new Promise(resolve => setTimeout(resolve, 190))
     setCardPlayed(card)
-    await new Promise(resolve => setTimeout(resolve, 200))
     setCards(cards.filter(c => c !== card))
   }
+  function handleReadyOutOfSync () {
+    socket.emit('is ready out of sync', gameId)
+  }
+
   useEffect(() => {
     socket.emit('fetch game state', gameId)
     socket.on('fetched game state', (gameState) => {
-      setGameState(gameState)
-      setCards(gameState.myHand)
-      setCardPlayed(gameState.currentCard)
+      handleGameState(gameState)
     })
-    socket.on('played card', (card) => {
-      otherCardPlayed(card)
+    socket.on('played card', (data) => {
+      console.log('card played', data)
+      otherCardPlayed(data.card)
+    })
+    socket.on('out of sync', (data) => {
+      console.log('out of sync', data)
+      setOutOfSync(data.outOfSync)
+      setOutOfSyncDetails(data.details)
+    })
+    socket.on('out of sync resolved', () => {
+      setOutOfSync(false)
+      setOutOfSyncDetails({})
+      setPauseCountdown(false)
+      socket.emit('fetch game state', gameId)
+    })
+    socket.on('pause countdown', (count) => {
+      setPauseCountdown(count)
     })
   }, [])
   if (!gameState) return (<div>Loading...</div>)
@@ -119,9 +143,9 @@ export default function GamePage ({ gameId, me }) {
         flexDirection: 'column',
         height: '100vh'
       }}>
+      <OutOfSyncModal handleReady={handleReadyOutOfSync} open={outOfSync} outOfSyncDetails={outOfSyncDetails} pauseCountdown={pauseCountdown} />
       <motion.div animate={otherCardControls} style={{ ...cardStyle, position: 'absolute', y: '-600px' }}> <h1>{cardPlayedAnimation}</h1></motion.div>
       <motion.div ref={constraintsRef} style={{ overflow: 'hidden', border: '3px solid black', height: '630px', width: '98%' }}>
-      <DiscardDrawer />
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%' }}>
           <div ref={dropZoneRef} style={{ paddingBottom: '90px', paddingTop: '80px', paddingLeft: '32%', paddingRight: '32%' }}>
             <div ref={cardHolderRef} style={cardHolderStyle}>

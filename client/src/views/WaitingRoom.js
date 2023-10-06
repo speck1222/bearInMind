@@ -10,12 +10,14 @@ export default function WaitingRoom ({ gameId, me }) {
   const socket = useSocket()
   const [players, setPlayers] = useState([])
   const [isHost, setIsHost] = useState(false)
+  const [gameStarted, setGameStarted] = useState(false)
 
   function leaveGame () {
     socket.emit('leave game', gameId)
   }
 
   function startGame () {
+    setGameStarted(true)
     socket.emit('start game', gameId)
   }
 
@@ -84,7 +86,7 @@ export default function WaitingRoom ({ gameId, me }) {
           </Grid>
           {me.isHost &&
             <Grid item xs={6}>
-              <MyButton onClick={startGame} label='Start Game' gradient='primary' />
+              <MyButton disabled={gameStarted} onClick={startGame} label='Start Game' gradient='primary' />
             </Grid>
           }
         </Grid>

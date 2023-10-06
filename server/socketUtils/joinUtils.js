@@ -1,10 +1,20 @@
 const redisClient = require('../RedisClient')
 const { setUserName, getUserId, fetchMe, getUserName } = require('./userUtils')
 const { sendServerMessage } = require('./chatUtils')
+const { deleteGame } = require('./gameUtils')
 
 const gameExists = async (code) => {
   const gameExists = await redisClient.exists(`games:${code}:started`)
   return gameExists
+}
+
+async function getCurrentGame (io, socket) {
+  const userId = await getUserId(socket)
+  if (!userId) {
+    return null
+  }
+  const currentGame = await redisClient.get(`users:${userId}:currentGame`)
+  return currentGame
 }
 
 async function getPlayers (code) {
@@ -29,6 +39,11 @@ async function joinGame (io, socket, code, userName) {
   const isGame = await gameExists(code)
   if (!isGame) {
     socket.emit('alert', 'error', 'Game does not exist!')
+    return
+  }
+  const gameStarted = await redisClient.get(`games:${code}:started`)
+  if (gameStarted === '1') {
+    socket.emit('alert', 'error', 'Game has already started!')
     return
   }
   // join 'game' room\
@@ -64,10 +79,7 @@ async function leaveGame (io, socket, code) {
   fetchMe(socket)
   let players = await getPlayers(code)
   if (players.length === 0) {
-    await redisClient.del(`games:${code}:started`)
-    await redisClient.del(`games:${code}:host`)
-    await redisClient.del(`games:${code}:players`)
-    await redisClient.del(`games:${code}:messages`)
+    deleteGame(code)
     return
   }
   if (players.length === 1) {
@@ -83,3 +95,4 @@ module.exports.fetchPlayers = fetchPlayers
 module.exports.isPlayerInGame = isPlayerInGame
 module.exports.leaveGame = leaveGame
 module.exports.getPlayers = getPlayers
+module.exports.getCurrentGame = getCurrentGame
