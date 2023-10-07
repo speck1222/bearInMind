@@ -1,6 +1,7 @@
 const redisClient = require('../RedisClient')
 
-async function deleteKeysWithPrefix (redisClient, prefix) {
+async function deleteKeysWithPrefix (prefix) {
+  console.log('Deleting keys with prefix:', prefix)
   let cursor = '0'
 
   do {

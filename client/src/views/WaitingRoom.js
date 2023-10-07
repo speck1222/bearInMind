@@ -1,5 +1,6 @@
 import { Paper, Container, Typography, List, ListItem, ListItemText, ListItemAvatar, Avatar, Divider, Button, Grid } from '@mui/material'
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+import { CirclePicker } from 'react-color'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useSocket } from '../websocket/useSocket'
 import ChatFeed from '../components/ChatFeed'
@@ -9,8 +10,10 @@ import MyButton from '../components/Button'
 export default function WaitingRoom ({ gameId, me }) {
   const socket = useSocket()
   const [players, setPlayers] = useState([])
-  const [isHost, setIsHost] = useState(false)
   const [gameStarted, setGameStarted] = useState(false)
+  const [availableColors, setAvailableColors] = useState([])
+  const [showPicker, setShowPicker] = useState(false)
+  const [myColor, setMyColor] = useState(me.color)
 
   function leaveGame () {
     socket.emit('leave game', gameId)
@@ -24,13 +27,15 @@ export default function WaitingRoom ({ gameId, me }) {
   React.useEffect(() => {
     socket.emit('fetch players', gameId)
 
-    socket.on('fetched players', (players) => {
-      setPlayers(players)
+    socket.on('fetched players', (data) => {
+      console.log(data.players)
+      setPlayers(data.players)
+      setAvailableColors(data.availableColors)
     })
     return () => {
       socket.off('fetched players')
     }
-  }, [])
+  }, [availableColors])
 
   const backgroundImageStyle = {
     backgroundImage: `url(${forestScene})`,
@@ -45,7 +50,18 @@ export default function WaitingRoom ({ gameId, me }) {
     zIndex: -1
   }
 
-  if (!players || !me) return (<div>Loading...</div>)
+  if (!me) return (<div>Loading...</div>)
+
+  const handleColorChange = (color, event) => {
+    setMyColor(color.hex)
+    setShowPicker(false)
+    socket.emit('change color', gameId, color.hex)
+    // Emit the color change to the server here, if needed
+  }
+
+  const togglePicker = () => {
+    setShowPicker(!showPicker)
+  }
 
   return (
     <div style={backgroundImageStyle}>
@@ -65,14 +81,25 @@ export default function WaitingRoom ({ gameId, me }) {
             <Typography color='white' variant="h5" align="center" gutterBottom>Room Code: <Typography variant='h4' color='peachpuff'>{gameId}</Typography></Typography>
 
             <List style={{ border: '3px solid black', borderRadius: '10px', marginBottom: '20px', backgroundColor: '#ffffff' }}>
-              {players.map((player, index) => (
+              {players?.map((player, index) => (
                 <div key={player.userId}>
                   <ListItem button>
-                    <ListItemAvatar>
-                      <Avatar>
-                      </Avatar>
-                    </ListItemAvatar>
-                    <ListItemText primary={`${player.userName}${player.isHost ? ' (Host)' : player.userId === me.userId ? ' (you)' : ''}`} />
+                    {player.userId === me.userId
+                      ? (
+                        <>
+                          {!showPicker && <Avatar style={{ backgroundColor: myColor, marginRight: '10px' }} onClick={togglePicker} />}
+                          {showPicker
+                            ? <CirclePicker color={myColor} onChangeComplete={handleColorChange} colors={availableColors} />
+                            : <ListItemText primary={`${player.userName}${player.isHost ? ' (Host)' : ' (you)'}`} />}
+                        </>
+                        )
+                      : (
+                        <>
+                          <Avatar style={{ backgroundColor: player?.color || '#ccc', marginRight: '10px' }} />
+                          <ListItemText primary={`${player.userName}${player.isHost ? ' (Host)' : ''}`} />
+                        </>
+                        )
+                    }
                   </ListItem>
                   {index < players.length - 1 && <Divider />}
                 </div>
