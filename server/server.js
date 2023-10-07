@@ -4,7 +4,7 @@ const { createServer } = require('http')
 const { Server } = require('socket.io')
 const { initGame, startGame, fetchGameState, playCard, isReadyOutOfSync, deleteGame, isReadyNewRound } = require('./socketUtils/gameUtils')
 const { refreshUserSession, fetchMe } = require('./socketUtils/userUtils')
-const { fetchPlayers, joinGame, leaveGame, getCurrentGame } = require('./socketUtils/joinUtils')
+const { fetchPlayers, joinGame, leaveGame, getCurrentGame, changeColor } = require('./socketUtils/joinUtils')
 const { fetchMessages, sendMessage } = require('./socketUtils/chatUtils')
 
 const PORT = 3001
@@ -62,6 +62,7 @@ const runApplication = async () => {
     socket.on('play card', (code, card) => safeEmit(playCard, io, socket, code, card))
     socket.on('is ready out of sync', (code) => safeEmit(isReadyOutOfSync, io, socket, code))
     socket.on('is ready new round', (code) => safeEmit(isReadyNewRound, io, socket, code))
+    socket.on('change color', (code, color) => safeEmit(changeColor, io, socket, code, color))
   })
 
   httpServer.listen(PORT)

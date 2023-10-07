@@ -166,6 +166,7 @@ async function fetchGameState (io, socket, code) {
   const outOfSyncDetails = await redisClient.get(`games:${code}:outOfSyncDetails`)
   const paused = await redisClient.get(`games:${code}:paused`)
   const pauseDetails = await redisClient.get(`games:${code}:pauseDetails`)
+  const lastPlayerToPlay = await redisClient.get(`games:${code}:lastPlayerToPlay`)
   let parsedOutOfSyncDetails = {}
   if (outOfSyncDetails) {
     parsedOutOfSyncDetails = JSON.parse(outOfSyncDetails)
@@ -174,7 +175,7 @@ async function fetchGameState (io, socket, code) {
   if (pauseDetails) {
     parsedPausedDetails = JSON.parse(pauseDetails)
   }
-  socket.emit('fetched game state', { myHand, players, cardCounts, currentCard, outOfSync, outOfSyncDetails: parsedOutOfSyncDetails, paused, pauseDetails: parsedPausedDetails })
+  socket.emit('fetched game state', { myHand, players, cardCounts, currentCard, outOfSync, outOfSyncDetails: parsedOutOfSyncDetails, paused, pauseDetails: parsedPausedDetails, lastPlayerToPlay })
 }
 
 async function playCard (io, socket, code, card) {
@@ -191,6 +192,7 @@ async function playCard (io, socket, code, card) {
   }
   await redisClient.lrem(`games:${code}:hands:${userId}`, 0, card)
   await redisClient.set(`games:${code}:currentCard`, card)
+  await redisClient.set(`games:${code}:lastPlayerToPlay`, userId)
 
   if (await checkAndHandleRoundWin(io, socket, code)) {
     console.log('round won')
@@ -204,7 +206,7 @@ async function playCard (io, socket, code, card) {
     return
   }
   const { cardCounts, myHand } = await getCardCounts(code, userId)
-  socket.to(code).emit('played card', { userId, card, cardCounts, myHand })
+  io.sockets.in(code).emit('played card', { userId, card, cardCounts, myHand })
 }
 
 async function getPlayerHands (code) {
@@ -280,7 +282,7 @@ async function isReadyOutOfSync (io, socket, code) {
     const countDown = 3
     for (let i = countDown; i > 0; i--) {
       io.sockets.in(code).emit('pause countdown', i)
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      await new Promise(resolve => setTimeout(resolve, 900))
     }
     io.sockets.in(code).emit('out of sync resolved')
   } else {
@@ -291,8 +293,6 @@ async function isReadyOutOfSync (io, socket, code) {
 async function checkAndHandleRoundWin (io, socket, code) {
   const roundWon = await checkRoundWon(code)
   if (roundWon) {
-    const l = await redisClient.get(`games:${code}:level`)
-    console.log('round won', l)
     await redisClient.incr(`games:${code}:level`)
     await redisClient.set(`games:${code}:paused`, '1')
     const pauseDetails = {}
@@ -341,7 +341,7 @@ async function isReadyNewRound (io, socket, code) {
     const countDown = 3
     for (let i = countDown; i > 0; i--) {
       io.sockets.in(code).emit('pause countdown', i)
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      await new Promise(resolve => setTimeout(resolve, 900))
     }
     io.sockets.in(code).emit('resolved new round')
   } else {

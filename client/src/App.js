@@ -50,7 +50,6 @@ function App () {
       socket.off('start game')
     }
   }, [])
-
   if (!me) return (<div>Loading...</div>)
 
   const renderPage = () => {

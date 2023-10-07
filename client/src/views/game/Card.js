@@ -9,7 +9,7 @@ const containerStyle = {
   marginTop: '40px'
 }
 
-const Hand = ({ cards, constraintsRef, playCard, dropZoneBounds, startingCardRef, cardHolderPoints }) => {
+const Hand = ({ cards, constraintsRef, playCard, dropZoneBounds, startingCardRef, cardHolderPoints, color }) => {
   const controls = useAnimation()
   const draggableContainerRef = React.useRef(null)
   const [draggableWidth, setDraggableWidth] = useState(null)
@@ -69,7 +69,7 @@ const Hand = ({ cards, constraintsRef, playCard, dropZoneBounds, startingCardRef
 
   const cardStyle = {
     border: '2px solid black',
-    backgroundColor: 'white',
+    backgroundColor: color,
     borderRadius: '5px',
     width: '100px',
     height: '140px',
@@ -84,7 +84,7 @@ const Hand = ({ cards, constraintsRef, playCard, dropZoneBounds, startingCardRef
   const cardHolderStyle = {
     paddingLeft: '10px',
     border: '2px solid black',
-    backgroundColor: 'green',
+    backgroundColor: 'lightgray',
     borderRadius: '5px',
     width: '130px',
     height: '180px',

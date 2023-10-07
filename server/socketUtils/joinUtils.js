@@ -3,8 +3,26 @@ const { setUserName, getUserId, fetchMe, getUserName } = require('./userUtils')
 const { sendServerMessage } = require('./chatUtils')
 const { deleteKeysWithPrefix } = require('../redisUtils/utils')
 
+const colors = [
+  '#795548', // Brown
+  '#FF9800', // Orange
+  '#009688', // Teal
+  '#8BC34A', // Light Green
+  '#9C27B0', // Purple
+  '#F44336', // Red
+  '#2196F3', // Blue
+  '#FFEB3B' // Yellow
+]
+
 async function deleteGame (code) {
-  await deleteKeysWithPrefix(redisClient, `games:${code}`)
+  redisClient.del(`games:${code}:players`)
+  redisClient.del(`games:${code}:started`)
+  redisClient.del(`games:${code}:host`)
+  redisClient.del(`games:${code}:currentCard`)
+  redisClient.del(`games:${code}:outOfSync`)
+  redisClient.del(`games:${code}:outOfSyncDetails`)
+  redisClient.del(`games:${code}:paused`)
+  redisClient.del(`games:${code}:pausedDetails`)
 }
 
 const gameExists = async (code) => {
@@ -26,7 +44,8 @@ async function getPlayers (code) {
   const hostId = await redisClient.get(`games:${code}:host`)
   const players = await Promise.all(playerIds.map(async (Id) => {
     const userName = await redisClient.get(`users:${Id}:userName`)
-    return { userId: Id, userName, isHost: Id === hostId }
+    const color = await redisClient.get(`users:${Id}:color`)
+    return { userId: Id, userName, isHost: Id === hostId, color }
   }))
   return players
 }
@@ -37,6 +56,36 @@ async function isPlayerInGame (code, playerId) {
     return true
   }
   return false
+}
+
+async function availableColors (code) {
+  const players = await getPlayers(code)
+  const takenColors = players.map(player => player.color)
+  const availableColors = colors.filter(color => !takenColors.includes(color))
+  return availableColors
+}
+
+async function randomAvailableColor (code) {
+  const players = await getPlayers(code)
+  const takenColors = players.map(player => player.color)
+  const availableColors = colors.filter(color => !takenColors.includes(color))
+  const randomIndex = Math.floor(Math.random() * availableColors.length)
+  return availableColors[randomIndex]
+}
+
+async function changeColor (io, socket, code, color) {
+  console.log('change color', code, color)
+  color = color.toUpperCase()
+  const colors = await availableColors(code)
+  console.log(colors)
+  if (!colors.includes(color)) {
+    socket.emit('alert', 'error', 'Color is already taken!')
+    return
+  }
+  const userId = await getUserId(socket)
+  await redisClient.set(`users:${userId}:color`, color)
+  const players = await getPlayers(code)
+  socket.to(code).emit('fetched players', { players, availableColors: colors })
 }
 
 async function joinGame (io, socket, code, userName) {
@@ -59,18 +108,19 @@ async function joinGame (io, socket, code, userName) {
   await setUserName(socket, userName)
   await redisClient.rpush(`games:${code}:players`, userId)
   await redisClient.set(`users:${userId}:currentGame`, code)
+  await redisClient.set(`users:${userId}:color`, await randomAvailableColor(code))
   socket.join(code)
   // re fetch user info
   fetchMe(socket)
   // emit to all players in game room
   const players = await getPlayers(code)
-  socket.to(code).emit('fetched players', players)
+  socket.to(code).emit('fetched players', { players, availableColors: await availableColors(code) })
   sendServerMessage(io, code, `${userName} has joined the game.`)
 }
 
 async function fetchPlayers (io, socket, code) {
   const players = await getPlayers(code)
-  socket.emit('fetched players', players)
+  socket.emit('fetched players', { players, availableColors: await availableColors(code) })
 }
 
 async function leaveGame (io, socket, code) {
@@ -91,7 +141,7 @@ async function leaveGame (io, socket, code) {
     players = await getPlayers(code)
   }
   sendServerMessage(io, code, `${userName} has left the game.`)
-  socket.to(code).emit('fetched players', players)
+  socket.to(code).emit('fetched players', { players, availableColors: await availableColors(code) })
 }
 
 module.exports.joinGame = joinGame
@@ -100,3 +150,4 @@ module.exports.isPlayerInGame = isPlayerInGame
 module.exports.leaveGame = leaveGame
 module.exports.getPlayers = getPlayers
 module.exports.getCurrentGame = getCurrentGame
+module.exports.changeColor = changeColor

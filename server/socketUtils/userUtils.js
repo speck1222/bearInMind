@@ -63,11 +63,12 @@ const fetchMe = async (socket) => {
   const gameStarted = await redisClient.get(`games:${currentGame}:started`)
   const isHost = await redisClient.get(`games:${currentGame}:host`) === userId
   const gameExists = await redisClient.exists(`games:${currentGame}:started`)
+  const color = await redisClient.get(`users:${userId}:color`)
   if (!gameExists) {
     await redisClient.del(`users:${userId}:currentGame`)
     currentGame = null
   }
-  socket.emit('fetched me', { userId, userName, currentGame, gameStarted, isHost })
+  socket.emit('fetched me', { userId, userName, currentGame, gameStarted, isHost, color })
 }
 
 module.exports.getUserId = getUserId

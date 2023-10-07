@@ -19,6 +19,7 @@ export default function GamePage ({ gameId, me }) {
   const [gameState, setGameState] = useState(null)
   const [cards, setCards] = useState([])
   const [cardPlayed, setCardPlayed] = useState(null)
+  const [lastPlayerToPlay, setLastPlayerToPlay] = useState(null)
   const [cardPlayedAnimation, setCardPlayedAnimation] = useState(null)
   const [dropZoneBounds, setDropZoneBounds] = useState({ left: 0, right: 0, top: 0, bottom: 0 })
   const [cardHolderPoints, setCardHolderPoints] = useState({ left: 0, right: 0, top: 0, bottom: 0 })
@@ -56,7 +57,6 @@ export default function GamePage ({ gameId, me }) {
   }, [gameState])
 
   async function otherCardPlayed (card) {
-    console.log('other card played', card)
     setCardPlayedAnimation(card)
     // otherCardControls.start({ ...otherCardToHolderPoints })
     otherCardControls.start({ x: 0, y: -112, transition: { duration: 0.2, scale: 1.2 } })
@@ -74,12 +74,13 @@ export default function GamePage ({ gameId, me }) {
     setOutOfSyncDetails(gameState.outOfSyncDetails)
     setIsPaused(gameState.paused === '1')
     setPauseDetails(gameState.pauseDetails)
+    setLastPlayerToPlay(gameState.lastPlayerToPlay)
   }
 
   async function playCard (card) {
     socket.emit('play card', gameId, card)
     await new Promise(resolve => setTimeout(resolve, 190))
-    setCardPlayed(card)
+    setCardPlayed(card, gameId)
     setCards(cards.filter(c => c !== card))
   }
   function handleReadyOutOfSync () {
@@ -96,11 +97,14 @@ export default function GamePage ({ gameId, me }) {
       handleGameState(gameState)
     })
     socket.on('played card', (data) => {
-      console.log('card played', data)
-      otherCardPlayed(data.card)
+      console.log('played card', data.userId)
+      setLastPlayerToPlay(data.userId)
+      console.log('me', me.userId, data.userId)
+      if (data.userId !== me.userId) {
+        otherCardPlayed(data.card)
+      }
     })
     socket.on('out of sync', (data) => {
-      console.log('out of sync', data)
       setOutOfSync(data.outOfSync)
       setOutOfSyncDetails(data.details)
     })
@@ -138,10 +142,11 @@ export default function GamePage ({ gameId, me }) {
     alignItems: 'center',
     flexShrink: 0
   }
-
+  const color = gameState.players.find(player => player.userId === lastPlayerToPlay)?.color || 'white'
+  console.log('color', color)
   const cardStyle = {
     border: '2px solid black',
-    backgroundColor: 'white',
+    backgroundColor: color || 'white',
     borderRadius: '5px',
     width: '100px',
     height: '147px',
@@ -174,7 +179,7 @@ export default function GamePage ({ gameId, me }) {
             </div>
           </div>
         </div>
-        <Hand cards={cards} constraintsRef={constraintsRef} playCard={playCard} dropZoneBounds={dropZoneBounds} startingCardRef={startingCardRef} cardHolderPoints={cardHolderPoints} />
+        <Hand cards={cards} constraintsRef={constraintsRef} playCard={playCard} dropZoneBounds={dropZoneBounds} startingCardRef={startingCardRef} cardHolderPoints={cardHolderPoints} color={me.color} />
       </motion.div>
     </div>
   )
