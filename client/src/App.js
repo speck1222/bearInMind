@@ -33,6 +33,7 @@ function App () {
     })
 
     socket.on('start game', () => {
+      socket.emit('fetch me')
       setGameStarted(1)
     })
 

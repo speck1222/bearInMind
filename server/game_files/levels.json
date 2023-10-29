@@ -1,32 +1,102 @@
 {
-  "1": {
-    "numCards": "1"
-  },
-  "2": {
-    "numCards": "2"
-  },
-  "3": {
-    "numCards": "3"
-  },
-  "4": {
-    "numCards": "4"
-  },
-  "5": {
-    "numCards": "5"
-  },
-  "6": {
-    "numCards": "6"
-  },
-  "7": {
-    "numCards": "7"
-  },
-  "8": {
-    "numCards": "8"
-  },
-  "9": {
-    "numCards": "9"
-  },
-  "10": {
-    "numCards": "10"
-  }
+  "gameConfigurations": [
+    {
+      "numPlayers": "1", 
+      "startingLives": "2",
+      "startingShurikens": "1",
+      "totalLevels": "2"
+    },
+    {
+      "numPlayers": "2",
+      "startingLives": "2",
+      "startingShurikens": "1",
+      "totalLevels": "12"
+    },
+    {
+      "numPlayers": "3",
+      "startingLives": "3",
+      "startingShurikens": "1",
+      "totalLevels": "10"
+    },
+    {
+      "numPlayers": "4",
+      "startingLives": "3",
+      "startingShurikens": "1",
+      "totalLevels": "8"
+    }
+  ],
+  "rounds": [
+    {
+      "level": "1",
+      "cardsPerPlayer": "1",
+      "bonus": null
+    },
+    {
+      "level": "2",
+      "cardsPerPlayer": "2",
+      "bonus": {
+        "shurikens": "1"
+      }
+    },
+    {
+      "level": "3",
+      "cardsPerPlayer": "3",
+      "bonus": {
+        "lives": "1"
+      }
+    },
+    {
+      "level": "4",
+      "cardsPerPlayer": "4",
+      "bonus": null
+    },
+    {
+      "level": "5",
+      "cardsPerPlayer": "5",
+      "bonus": {
+        "shurikens": "1"
+      }
+    },
+    {
+      "level": "6",
+      "cardsPerPlayer": "6",
+      "bonus": {
+        "lives": "1"
+      }
+    },
+    {
+      "level": "7",
+      "cardsPerPlayer": "7",
+      "bonus": null
+    },
+    {
+      "level": "8",
+      "cardsPerPlayer": "8",
+      "bonus": {
+        "shurikens": "1"
+      }
+    },
+    {
+      "level": "9",
+      "cardsPerPlayer": "9",
+      "bonus": {
+        "lives": "1"
+      }
+    },
+    {
+      "level": "10",
+      "cardsPerPlayer": "10",
+      "bonus": null
+    },
+    {
+      "level": "11",
+      "cardsPerPlayer": "11",
+      "bonus": null
+    },
+    {
+      "level": "12",
+      "cardsPerPlayer": "12",
+      "bonus": null
+    }
+  ]
 }

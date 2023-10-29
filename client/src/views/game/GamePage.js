@@ -5,6 +5,23 @@ import OutOfSyncModal from '../../components/OutOfSyncModal'
 import { motion, useAnimation } from 'framer-motion'
 import RoundStartModal from '../../components/RoundStartModal'
 
+export function renderHearts (lives) {
+  console.log(lives, 'lives')
+  const heartArray = Array.from({ length: lives }, (_, index) => (
+    <span key={index} style={{ margin: '0 5px' }}>❤️</span>
+  ))
+
+  return (
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center'
+    }}>
+      {heartArray}
+    </div>
+  )
+}
+
 export default function GamePage ({ gameId, me }) {
   const constraintsRef = useRef(null)
   const dropZoneRef = useRef(null)
@@ -93,13 +110,10 @@ export default function GamePage ({ gameId, me }) {
   useEffect(() => {
     socket.emit('fetch game state', gameId)
     socket.on('fetched game state', (gameState) => {
-      console.log('fetched game state', gameState)
       handleGameState(gameState)
     })
     socket.on('played card', (data) => {
-      console.log('played card', data.userId)
       setLastPlayerToPlay(data.userId)
-      console.log('me', me.userId, data.userId)
       if (data.userId !== me.userId) {
         otherCardPlayed(data.card)
       }
@@ -119,6 +133,7 @@ export default function GamePage ({ gameId, me }) {
     })
     socket.on('new round', (pauseDetails) => {
       setIsPaused(true)
+      console.log('pauseDetails', pauseDetails)
       setPauseDetails(pauseDetails)
     })
     socket.on('resolved new round', () => {
@@ -168,11 +183,15 @@ export default function GamePage ({ gameId, me }) {
         flexDirection: 'column',
         height: '100vh'
       }}>
-      <OutOfSyncModal handleReady={handleReadyOutOfSync} open={outOfSync} outOfSyncDetails={outOfSyncDetails} pauseCountdown={pauseCountdown} />
+
+      <OutOfSyncModal handleReady={handleReadyOutOfSync} open={outOfSync} outOfSyncDetails={outOfSyncDetails} pauseCountdown={pauseCountdown} lifes={gameState.lives} />
       <RoundStartModal handleReady={handleReadyNewRound} open={isPaused} roundInfo={pauseDetails} pauseCountdown={pauseCountdown} />
       <motion.div animate={otherCardControls} style={{ ...cardStyle, position: 'absolute', y: '-600px' }}> <h1>{cardPlayedAnimation}</h1></motion.div>
       <motion.div ref={constraintsRef} style={{ overflow: 'hidden', border: '3px solid black', height: '630px', width: '98%' }}>
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%' }}>
+
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%', flexDirection: 'column' }}>
+          <div></div>
+          {renderHearts(gameState.lives)}
           <div ref={dropZoneRef} style={{ paddingBottom: '90px', paddingTop: '80px', paddingLeft: '32%', paddingRight: '32%' }}>
             <div ref={cardHolderRef} style={cardHolderStyle}>
               {cardPlayed && <div style={cardStyle}> <h1>{cardPlayed}</h1></div>}

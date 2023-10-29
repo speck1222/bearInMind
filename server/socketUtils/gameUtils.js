@@ -53,6 +53,10 @@ function getRandomMessage () {
   return messages[Math.floor(Math.random() * messages.length)]
 }
 
+function getGameConfiguration (numPlayers) {
+  return levels.gameConfigurations.find(config => config.numPlayers === numPlayers)
+}
+
 function generateGameCode () {
   const characters = 'ABCDEFGHIJKLMNPQRSTUVWXYZ123456789'
   let result = ''
@@ -105,11 +109,13 @@ async function startGame (io, socket, code) {
   const started = await redisClient.get(`games:${code}:started`)
   console.log('started', started)
   if (started === '1') {
-    console.log('game already started')
     return
   }
+  const numPlayers = await redisClient.llen(`games:${code}:players`)
   await redisClient.set(`games:${code}:started`, '1')
   await redisClient.set(`games:${code}:level`, '1')
+  await redisClient.set(`games:${code}:lives`, getGameConfiguration(numPlayers.toString()).startingLives)
+  await redisClient.set(`games:${code}:totalLevels`, getGameConfiguration(numPlayers.toString()).totalLevels)
   await countDown(io, socket, code)
   await dealCards(code, 1)
   io.sockets.in(code).emit('start game')
@@ -117,7 +123,7 @@ async function startGame (io, socket, code) {
 
 async function startRound (code) {
   const currentLevel = await redisClient.get(`games:${code}:level`)
-  const cardsPerPlayer = levels[currentLevel].numCards
+  const cardsPerPlayer = levels.rounds.find(round => round.level === currentLevel).cardsPerPlayer
   await dealCards(code, cardsPerPlayer)
 }
 
@@ -167,6 +173,7 @@ async function fetchGameState (io, socket, code) {
   const paused = await redisClient.get(`games:${code}:paused`)
   const pauseDetails = await redisClient.get(`games:${code}:pauseDetails`)
   const lastPlayerToPlay = await redisClient.get(`games:${code}:lastPlayerToPlay`)
+  const lives = await redisClient.get(`games:${code}:lives`)
   let parsedOutOfSyncDetails = {}
   if (outOfSyncDetails) {
     parsedOutOfSyncDetails = JSON.parse(outOfSyncDetails)
@@ -175,7 +182,7 @@ async function fetchGameState (io, socket, code) {
   if (pauseDetails) {
     parsedPausedDetails = JSON.parse(pauseDetails)
   }
-  socket.emit('fetched game state', { myHand, players, cardCounts, currentCard, outOfSync, outOfSyncDetails: parsedOutOfSyncDetails, paused, pauseDetails: parsedPausedDetails, lastPlayerToPlay })
+  socket.emit('fetched game state', { myHand, players, cardCounts, currentCard, outOfSync, outOfSyncDetails: parsedOutOfSyncDetails, paused, pauseDetails: parsedPausedDetails, lastPlayerToPlay, lives })
 }
 
 async function playCard (io, socket, code, card) {
@@ -195,13 +202,19 @@ async function playCard (io, socket, code, card) {
   await redisClient.set(`games:${code}:lastPlayerToPlay`, userId)
 
   if (await checkAndHandleRoundWin(io, socket, code)) {
-    console.log('round won')
     return
   }
   const outOfSync = await checkForOutOfSync(code, card, userId)
   if (outOfSync.outOfSync) {
     await redisClient.set(`games:${code}:outOfSync`, '1')
     await redisClient.set(`games:${code}:outOfSyncDetails`, JSON.stringify(outOfSync.details))
+    const lives = await redisClient.get(`games:${code}:lives`)
+    await redisClient.set(`games:${code}:lives`, lives - 1)
+    if (lives - 1 === 0) {
+      io.sockets.in(code).emit('alert', 'error', 'You lost! Better luck next time!')
+      await deleteGame(code)
+      return
+    }
     io.sockets.in(code).emit('out of sync', outOfSync)
     return
   }
@@ -307,7 +320,13 @@ async function checkAndHandleRoundWin (io, socket, code) {
       pauseDetails.players[player.userName] = { isReady: false }
     }
     const currentLevel = await redisClient.get(`games:${code}:level`)
-    pauseDetails.level = levels[currentLevel]
+    pauseDetails.level = levels.rounds.find(round => round.level === currentLevel).cardsPerPlayer
+    const totalLevels = await redisClient.get(`games:${code}:totalLevels`)
+    if (Number(currentLevel) > Number(totalLevels)) {
+      io.sockets.in(code).emit('alert', 'success', 'You won! Congratulations!')
+      await deleteGame(code)
+      return true
+    }
     await redisClient.set(`games:${code}:pauseDetails`, JSON.stringify(pauseDetails))
     io.sockets.in(code).emit('new round', pauseDetails)
     return true

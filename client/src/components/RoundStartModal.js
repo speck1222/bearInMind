@@ -7,8 +7,8 @@ function RoundStartModal ({ open, handleReady, pauseCountdown, roundInfo }) {
   return (
     <PauseModal open={open} pauseCountdown={pauseCountdown} handleReady={handleReady}>
       <div>
-        <h1 id="modal-modal-title">{`Round ${roundInfo?.level?.numCards}`}</h1>
-        <h2>Whoo you did it!</h2>
+        <h1 id="modal-modal-title">{`Round ${Number(roundInfo?.level) - 1} Complete!`}</h1>
+        <h2>{`Ready for round ${roundInfo?.level}?`}</h2>
       </div>
     </PauseModal>
   )

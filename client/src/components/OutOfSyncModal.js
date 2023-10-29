@@ -8,6 +8,7 @@ import MyButton from './Button'
 import { motion, AnimatePresence } from 'framer-motion'
 import ReadyButton from './ReadyButton'
 import PauseModal from './PauseModal'
+import { renderHearts } from '../views/game/GamePage'
 
 const messages = []
 
@@ -34,7 +35,7 @@ function getRandomMessage () {
   return messages[Math.floor(Math.random() * messages.length)]
 }
 
-function OutOfSyncModal ({ open, outOfSyncDetails, handleReady, pauseCountdown }) {
+function OutOfSyncModal ({ open, outOfSyncDetails, handleReady, pauseCountdown, lifes }) {
   const [message, setMessage] = useState('')
   console.log('outOfSyncDetails', outOfSyncDetails)
   useEffect(() => {
@@ -69,6 +70,10 @@ function OutOfSyncModal ({ open, outOfSyncDetails, handleReady, pauseCountdown }
               }
               return null
             })}
+            <div style={cardRowStyle}>
+              <h3>Current Lives:</h3>
+              {renderHearts(lifes - 1)}
+            </div>
           </div>
         </div>
     </PauseModal>

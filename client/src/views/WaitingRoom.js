@@ -28,14 +28,13 @@ export default function WaitingRoom ({ gameId, me }) {
     socket.emit('fetch players', gameId)
 
     socket.on('fetched players', (data) => {
-      console.log(data.players)
       setPlayers(data.players)
       setAvailableColors(data.availableColors)
     })
     return () => {
       socket.off('fetched players')
     }
-  }, [availableColors])
+  }, [])
 
   const backgroundImageStyle = {
     backgroundImage: `url(${forestScene})`,
